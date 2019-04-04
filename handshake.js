@@ -12,10 +12,10 @@ function Person(id, name, handshakes)
 }
 
 
-/* Generates a random set of numshakes handshakes between popsize people. */
-function makeShakes(popsize,numshakes)
+/* Generates a random set of numshakes handshakes between popsize people, optionally with data entry errors at given error rate (between 0 and 1) */
+function makeShakes(popsize,numshakes,errorrate)
 {
-  /* This algorithm yields a complete set of handshakes about r% of the time, where r is given in the following table:
+  /* This algorithm yields a complete set of handshakes about r% of the time (with error rate 0), where r is given in the following table:
    *    # people  # handshakes  r
    *    50        2             75%
    *    50        3             58%
@@ -67,6 +67,44 @@ function makeShakes(popsize,numshakes)
     if( didFail ) fails.push(i);
 //    console.log( "After " + i + ": shakes=", shakes );
   }
+  /* Add some errors */
+  if(!errorrate || errorrate < 0) errorrate = 0;
+  if(errorrate > 1) errorrate = 1;
+  var numErrors = Math.round(popsize*errorrate);
+  var alreadyErrored = [];
+  while( numErrors-- > 0 ) {
+    var errorTarget;
+    do { errorTarget = Math.floor(Math.random()*popsize) } while( _.contains(alreadyErrored, errorTarget) );
+    alreadyErrored.push(errorTarget);
+    /* Three types of error: record completely missing, one or more handshakes missing, or handshakes incorrect */
+    switch( Math.floor(Math.random()*3) ) {
+      case 0: // Erase the entire record (student didn't submit their data)
+      {
+//        console.log("Erasing " + errorTarget );
+        shakes[errorTarget] = null;
+        break;
+      }
+      case 1: // Erase one or more handshakes (student forgot to enter some numbers)
+      {
+        var k = Math.min( Math.floor(Math.random()*numshakes), shakes[errorTarget].handshakes.length );
+        var dropped = []
+        while( k-- > 0 ) {
+          dropped.push(shakes[errorTarget].handshakes.pop());
+        }
+//        console.log("Forgetting that " + errorTarget + " shook " + dropped );
+        break;
+      }
+      case 2: // Replace correct handshakes with random numbers (student made data entry errors)
+      {
+//        console.log( "Overwriting shakes of " + errorTarget );
+        for( var i = 0; i < numshakes; i++ ) {
+          shakes[errorTarget].handshakes[i] = Math.floor(Math.random()*popsize);
+        }
+        break;
+      }
+    }
+  }
+  
 //  console.log( "Final: ", shakes );
 //  console.log( _.uniq(shakes.map(a => a.handshakes.length)).length==1?"Shakes successful!":"Shake fail" );
   return( {"shakes": shakes,"fails":fails} );
@@ -185,7 +223,7 @@ function enactEvent(state, t, event, person1id, person2id)
 
 var popsize = 100;
 var numshakes = 5;
-var infectiousperiod = 4;
+var infectiousperiod = numshakes;
 var patient0 = 2;
 
 function doSim()
