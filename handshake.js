@@ -96,6 +96,7 @@ function simulate(shakes, infectiousPeriod, patient0)
   var I = [];
   do // until no infectives remain
   {  
+    t++;
     I = _.filter( state, p=>(p.compartment == "I") );  // Get current infectives
 
     for( j = 0; j < I.length; j++ )
@@ -114,8 +115,13 @@ function simulate(shakes, infectiousPeriod, patient0)
         }
       }
     }
-    t++;
   } while( I.length > 0 );
+  console.log( "Epidemic ended at t = " + t );
+  // Get final susceptibles, recovereds
+  S = _.chain(_.filter( state, p=>(p.compartment == "S") )).map( p=>p.id ).value();
+  R = _.chain(_.filter( state, p=>(p.compartment == "R") )).map( p=>p.id ).value();
+  console.log( S.length + " susceptible: "+ S );
+  console.log( R.length + " recovered: " + R );
 }
 
 function enactEvent(state, t, event, person1id, person2id)
@@ -143,6 +149,26 @@ function enactEvent(state, t, event, person1id, person2id)
     case "handshake":
     {
       console.log( "t=" + t + ": " + state[person1id].name + " shakes hands with " + state[person2id].name );
+      /* Decide if person2 becomes infected */
+      if( state[person1id].compartment == "I" )
+      {
+        if( state[person2id].compartment == "S" )
+        {
+          // New infection has occurred!
+          enactEvent( state, t, "infection", person2id );
+          
+          // Drop any handshakes made by the infectee prior to infection.
+          while( state[person2id].handshakes.shift() != person1id ) { }
+        }
+        else
+        {
+          console.log( "  ... but " + state[person2id].name + " is already " + (state[person2id].compartment == "I"?"infected":"recovered")+"." );
+        }
+      }
+      else
+      {
+        console.log( "  ... but " + state[person1id].name + " is not infectious." );
+      }
       break;
     }
     default:
@@ -152,11 +178,15 @@ function enactEvent(state, t, event, person1id, person2id)
   }
 }
 
+var popsize = 100;
+var numshakes = 5;
+var infectiousperiod = 4;
+var patient0 = 2;
 
 function doSim()
 {
-  res = makeShakes( 10, 2 );
-  simulate( res.shakes, 4, 2 );
+  res = makeShakes( popsize, numshakes );
+  simulate( res.shakes, infectiousperiod, patient0 );
 }
 
 function doShakes(n,popsize,numshakes)
