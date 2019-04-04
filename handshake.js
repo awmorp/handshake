@@ -36,7 +36,7 @@ function makeShakes(popsize,numshakes)
   var fails = [];
   var shakes = new Array(popsize);
   /* Initialise the shakes object */
-  shakes = _.times( popsize, x=>new Person(x,"Name_" + x) );
+  shakes = _.times( popsize, x=>new Person(x,"#" + x) );
   
   /* Perform handshakes */
   for( var i = 0; i < popsize; i++ )
@@ -78,9 +78,12 @@ function simulate(shakes, infectiousPeriod, patient0)
 {
   var state = shakes;
   var t = 0;
+  var S = [], I = [], R = [];
+  var log = []; // record of # of S, I, R at each step
   
   /* Infect patient 0 */
   enactEvent( state, t, "initialinfection", patient0 );
+  log[0] = {"S": shakes.length - 1, "I": 1, "R": 0};
   
   /* Simulate successive steps */
   /*
@@ -93,7 +96,6 @@ function simulate(shakes, infectiousPeriod, patient0)
         perform the next handshake in their list of shakes - enactEvent( "handshake" )
       end if
   */
-  var I = [];
   do // until no infectives remain
   {  
     t++;
@@ -115,14 +117,16 @@ function simulate(shakes, infectiousPeriod, patient0)
         }
       }
     }
+    S = _.filter( state, p=>(p.compartment == "S") );
+    I = _.filter( state, p=>(p.compartment == "I") );
+    R = _.filter( state, p=>(p.compartment == "R") );
+    log[t] = {"S": S.length, "I": I.length, "R": R.length };
   } while( I.length > 0 );
   console.log( "Epidemic ended at t = " + t );
   // Get final susceptibles, recovereds
-  S = _.chain(_.filter( state, p=>(p.compartment == "S") )).map( p=>p.id ).value();
-  R = _.chain(_.filter( state, p=>(p.compartment == "R") )).map( p=>p.id ).value();
-  console.log( S.length + " susceptible: "+ S );
-  console.log( R.length + " recovered: " + R );
-  return( {"S": S, "R": R, "t": t} );
+  console.log( S.length + " susceptible: "+ _.map(S, p=>p.id) );
+  console.log( R.length + " recovered: " + _.map(R, p=>p.id) );
+  return( log );
 }
 
 function enactEvent(state, t, event, person1id, person2id)
