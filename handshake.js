@@ -122,6 +122,7 @@ function simulate(shakes, infectiousPeriod, patient0)
   R = _.chain(_.filter( state, p=>(p.compartment == "R") )).map( p=>p.id ).value();
   console.log( S.length + " susceptible: "+ S );
   console.log( R.length + " recovered: " + R );
+  return( {"S": S, "R": R, "t": t} );
 }
 
 function enactEvent(state, t, event, person1id, person2id)
@@ -186,10 +187,10 @@ var patient0 = 2;
 function doSim()
 {
   res = makeShakes( popsize, numshakes );
-  simulate( res.shakes, infectiousperiod, patient0 );
+  return( simulate( res.shakes, infectiousperiod, patient0 ) );
 }
 
-function doShakes(n,popsize,numshakes)
+function runShakes(n,popsize,numshakes)
 {
   var successes = _.chain(_.range(0,n)).map(x=>makeShakes(popsize,numshakes)).filter(k=>k.fails.length==0).value().length;
   return( successes )
