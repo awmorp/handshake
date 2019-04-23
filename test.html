@@ -6,8 +6,66 @@
   <script src="handshake.js"></script>
   <script src="libs/jquery-3.3.1.min.js"></script>
   <script src="libs/underscore-min.js"></script>
+  <script src="libs/csv.min.js"></script>
+  <style>
+    body {
+      height: 100%;
+      width: 100%;
+    }
+    
+    #flexcontainer {
+//      display: flex;
+//      flex-direction: column;
+//      flex-wrap: nowrap;
+    }
+    
+    #uistateblockcontainer {
+//      flex: 0 1 auto;
+    }
+    
+    .uistateblock {
+      display: inline-block;
+      vertical-align: top;
+      width: 33%;
+    }
+    
+    .activestate {
+      background: #ffffaa;
+    }
+    
+    #output {
+//      flex: 1 1 auto;
+      max-height: 200px;
+    }
+  </style>
  </head>
- <body>
-  <p>The handshake game</p>
+ <body onload="updateUIState();">
+  <h1>The handshake game</h1>
+  <div id="flexcontainer">
+    <div id="uistateblockcontainer">
+      <div class="state0 uistateblock">
+        <h2>Simulate shakes</h2>
+        Participant names:<br>
+        <textarea id="names" class="state0">Person</textarea><br>
+        Population size:<input type="number" id="popsize" value="100" min="1" class="state0"><br>
+        # handshakes:<input type="number" id="numshakes" value="5" min="1" class="state0"><br>
+        <!-- Infectious period:<input type="number" id="iperiod" value="5" min="1"><br> !-->
+        Error rate:<input type="number" id="errorrate" min="0" max="1" value="0" class="state0"><br>
+        <input type="button" onclick="generateButton()" value="Generate shakes" class="state0">
+      </div>
+      <div class="state1 uistateblock">
+        <h2>Run outbreak</h2>
+        Infectious period:<input type="number" id="infectiousperiod" value="4" min="1" class="state1"><br>
+        Patient 0 (id):<input type="number" id="patient0" value="0" min="0" class="state1"><br>
+        <input type="button" onclick="runButton()" value="Run outbreak" class="state1">
+      </div>
+      <div class="state2  uistateblock">
+        <h2>Fit model</h2>
+        <input type="button" onclick="exportCSVButton()" value="Export CSV" class="state2">
+      </div>
+    </div>
+    <pre id="output" style="overflow: scroll;">
+    </pre>
+  </pre>
  </body>
 </html>
