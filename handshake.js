@@ -1,14 +1,6 @@
 /* The Handshake Game simulation */
 /* Anthony Morphett, awmorp@gmail.com */
 
-/* TODO:
-  - rewrite to handle undefined array entries.
-        option 1: keep using Arrays but use _.filter or similar rather than array lookup to find person references.
-        option 2: use Object instead of Array; need to avoid use of .length
-  
-
-*/
-
 /** UI State:
  * 0: start state, no data loaded or generated yet
  * 1: data loaded or generated, outbreak not yet run
@@ -104,6 +96,14 @@ function makeShakes(popsize, numshakes, names, errorrate)
     if( didFail ) fails.push(i);
 //    console.log( "After " + i + ": shakes=", shakes );
   }
+  addErrors( shakes, popsize, numshakes, errorrate);
+  //  console.log( "Final: ", shakes );
+  //  console.log( _.uniq(shakes.map(a => a.handshakes.length)).length==1?"Shakes successful!":"Shake fail" );
+  return( {"shakes": shakes,"fails":fails} );
+}
+
+function addErrors( shakes, popsize, numshakes, errorrate)
+{
   /* Add some errors */
   if(!errorrate || errorrate < 0) errorrate = 0;
   if(errorrate > 1) errorrate = 1;
@@ -117,7 +117,7 @@ function makeShakes(popsize, numshakes, names, errorrate)
     switch( Math.floor(Math.random()*3) ) {
       case 0: // Erase the entire record (student didn't submit their data)
       {
-//        console.log("Erasing " + errorTarget );
+        console.log("Erasing " + errorTarget );
         delete shakes[errorTarget];
         break;
       }
@@ -128,12 +128,12 @@ function makeShakes(popsize, numshakes, names, errorrate)
         while( k-- > 0 ) {
           dropped.push(shakes[errorTarget].handshakes.pop());
         }
-//        console.log("Forgetting that " + errorTarget + " shook " + dropped );
+        console.log("Forgetting that " + errorTarget + " shook " + dropped );
         break;
       }
       case 2: // Replace correct handshakes with random numbers (student made data entry errors)
       {
-//        console.log( "Overwriting shakes of " + errorTarget );
+        console.log( "Overwriting shakes of " + errorTarget );
         for( var i = 0; i < numshakes; i++ ) {
           shakes[errorTarget].handshakes[i] = Math.floor(Math.random()*popsize);
         }
@@ -141,10 +141,6 @@ function makeShakes(popsize, numshakes, names, errorrate)
       }
     }
   }
-  
-//  console.log( "Final: ", shakes );
-//  console.log( _.uniq(shakes.map(a => a.handshakes.length)).length==1?"Shakes successful!":"Shake fail" );
-  return( {"shakes": shakes,"fails":fails} );
 }
 
 
@@ -296,9 +292,9 @@ function runShakes(n,popsize,numshakes)
 function output( str, replace )
 {
   if( replace ) {
-    $("#output").text( str + "\n" );
+    $("#output"+gUIState).text( str + "\n" );
   } else {
-    $("#output").text( $("#output").text() + str + "\n" );
+    $("#output"+gUIState).text( $("#output"+gUIState).text() + str + "\n" );
   }
 }
 
@@ -340,5 +336,33 @@ function exportCSVButton()
 
 function fitSIRButton()
 {
+  /* Fit SIR model to outbreak data */
+  
+  var maxT = gOutbreakData.length - 1;
+  
+  // Calculate derivatives ds/dt, di/dt, dr/dt
+  var derivs = function( x, beta, gamma ) {
+    var dsdt = -beta*x[0]*x[1];
+    var didt = beta*x[0]*x[1] - gamma*x[1];
+    var drdt = gamma*x[1];
+    return( [dsdt, didt, drdt] );
+  }
+  
+  var costfunc = function( beta, gamma ) {
 
+  }
+  
+  // Possible libraries to use:
+  // ODE solvers:
+  //  * https://github.com/littleredcomputer/odex-js   
+  //  * https://llarsen71.github.io/GMA1D/Docs/files/ODE-js.html
+  // Optimisers:
+  //  * https://github.com/tab58/ndarray-optimization
+  //  * https://github.com/benfred/fmin
+  // Graphing:
+  //  * https://mathjs.org/examples/browser/rocket_trajectory_optimization.html.html
+  
+  
+  
+  
 }
