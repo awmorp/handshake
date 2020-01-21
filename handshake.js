@@ -354,6 +354,7 @@ function updateUIState()
 
 function generateButton()
 {
+  gUIState = 0;
   var names = $("#names").val().split("\n");
   var popsize = $("#popsize").val();
   var numshakes = $("#numshakes").val();
@@ -367,6 +368,7 @@ function generateButton()
 
 function runButton()
 {
+  gUIState = 1;
   var infectiousperiod = $("#infectiousperiod").val();
   var patient0 = $("#patient0").val();
   output( "", true );
@@ -377,6 +379,7 @@ function runButton()
 
 function exportCSVButton()
 {
+  gUIState = 2;
   output( CSV.serialize( _.map(gOutbreakResult, x=>([x.S, x.I, x.R])) ), true );
 }
 
