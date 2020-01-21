@@ -40,6 +40,52 @@ function getPerson( array, id )
 /* Generates a random set of numshakes handshakes between popsize people, optionally with data entry errors at given error rate (between 0 and 1) */
 function makeShakes(popsize, numshakes, names, errorrate)
 {
+  var fails = [];
+  var shakes = [];
+//  debugger;
+  
+  /* Initialise the shakes object */
+  for( var i = 0; i < popsize; i++ ) {
+    shakes[i] = new Person(i, names[i % names.length] + (Math.floor(i / names.length) > 0 ? "_"+Math.floor(i / names.length):""));
+  }
+  if( numshakes == 0 || popsize == 0 ) return( {"shakes": shakes,"fails":fails} ); // Trivial cases, nothing to do
+  
+  var remaining = _.range(0,popsize,1);  // People who still need to do more handshakes
+  
+  /* Perform handshakes */
+  do {
+    // Choose first handshake partner
+    var firstShaker = _.sample(remaining);
+    var potentialPartners = _
+      .chain(remaining)  // Start with everyone who still needs to do more handshakes
+      .difference(shakes[firstShaker].handshakes,[firstShaker]) // Can't shake hands with anyone you've already shaken hands with, or yourself
+      .value();
+    if( potentialPartners.length > 0 ) {
+      // Found some potential shake partners. Select one at random and record the shake.
+      var secondShaker = _.sample(potentialPartners);
+//      console.log( firstShaker + " shakes with " + secondShaker );
+      shakes[firstShaker].handshakes.push(secondShaker);
+      shakes[secondShaker].handshakes.push(firstShaker);
+
+      remaining = _.reject(remaining, k => (shakes[k].handshakes.length >= numshakes) ); // Remove anyone who has finished all their shakes
+//      console.log( "remaining: " + remaining );
+    } else {
+      // Couldn't find anyone for this person to shake with
+//      console.log( "No shake partners for " + firstShaker );
+      fails.push(firstShaker);
+      remaining = _.without(remaining, firstShaker);
+    }
+  } while( remaining.length > 0 );
+  
+  addErrors( shakes, popsize, numshakes, errorrate);
+  //  console.log( "Final: ", shakes );
+  //  console.log( _.uniq(shakes.map(a => a.handshakes.length)).length==1?"Shakes successful!":"Shake fail" );
+  return( {"shakes": shakes,"fails":fails} );
+
+}
+
+function makeShakes_old(popsize, numshakes, names, errorrate)
+{
   /* This algorithm yields a complete set of handshakes about r% of the time (with error rate 0), where r is given in the following table:
    *    # people  # handshakes  r
    *    50        2             75%
