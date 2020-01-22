@@ -190,21 +190,36 @@ function addErrors( shakes, popsize, numshakes, errorrate)
 }
 
 
-/* Simulates disease transmission according to handshake game rules for the given set of handshakes, infectious period and initial infective patient0. */
-function simulate(popData, infectiousPeriod, patient0)
+/* Simulates disease transmission according to handshake game rules for the given set of handshakes, infectious period, initial infectives and initially vaccinated individuals. */
+function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinated)
 {
   var t = 0;
   var S = [], I = [], R = [];
   var log = []; // record of # of S, I, R at each step
   
-  if( !popData[patient0] ) {
-    console.log( "Error: specified patient0 " + patient0 + " does not exist." );
-    return( [] );
+  // Vaccinate
+  for( var i = 0; i < initialvaccinated.length; i++ ) {
+    if( !popData[initialvaccinated[i]] ) {
+      console.log( "Error: specified vaccinatee " + initialvaccinated[i] + " does not exist." );
+    }
+    /* Vaccinate the person */
+    enactEvent( popData, 0, "initialvaccinate", initialvaccinated[i] );
   }
-  /* Infect patient 0 */
-  enactEvent( popData, t, "initialinfection", patient0 );
-  log[0] = {"S": _.filter( popData, p=>(p && p.compartment == "S") ).length, "I": 1, "R": 0};
+
   
+  // Infect initial infectives
+  for( var i = 0; i < initialinfectives.length; i++ ) {
+    if( !popData[initialinfectives[i]] ) {
+      console.log( "Error: specified initial infective " + initialinfectives[i] + " does not exist." );
+    }
+    /* Infect initial infective */
+    enactEvent( popData, 0, "initialinfection", initialinfectives[i] );
+  }
+  S = _.filter( popData, p=>(p && p.compartment == "S") );
+  I = _.filter( popData, p=>(p && p.compartment == "I") );
+  R = _.filter( popData, p=>(p && p.compartment == "R") );
+  log[0] = {"S": S.length, "I": I.length, "R": R.length };
+
   /* Simulate successive steps */
   /*
   do until no infectives remain:
@@ -216,7 +231,7 @@ function simulate(popData, infectiousPeriod, patient0)
         perform the next handshake in their list of shakes - enactEvent( "handshake" )
       end if
   */
-  do // until no infectives remain
+  while( I.length > 0 ) // until no infectives remain
   {  
     t++;
     I = _.filter( popData, p=>(p.compartment == "I") );  // Get current infectives
@@ -241,7 +256,7 @@ function simulate(popData, infectiousPeriod, patient0)
     I = _.filter( popData, p=>(p && p.compartment == "I") );
     R = _.filter( popData, p=>(p && p.compartment == "R") );
     log[t] = {"S": S.length, "I": I.length, "R": R.length };
-  } while( I.length > 0 );
+  }// while( I.length > 0 );
   output( "Epidemic ended at t = " + t );
   // Get final susceptibles, recovereds
   output( S.length + " susceptible: "+ _.map(S, p=>p.id) );
@@ -258,7 +273,7 @@ function enactEvent(popData, t, event, person1id, person2id)
         console.log( "Error: specified initial infective " + person1id + " does not exist" );
         return;
       }
-      output( "t=" + t + ": The initial infective is " + popData[person1id].name );
+      output( "t=" + t + ": " + popData[person1id].name + " is initially infective!" );
       enactEvent( popData, t, "infection", person1id ); // Infect the patient
       break;
     }
@@ -273,10 +288,22 @@ function enactEvent(popData, t, event, person1id, person2id)
       output( "t=" + t + ": " + popData[person1id].name + " is now infected!" );
       break;
     }
+    case "initialvaccinate":
+    {
+      if( !popData[person1id] ) {
+        console.log( "Error: specified vaccinatee " + person1id + " does not exist" );
+        return;
+      }
+      output( "t=" + t + ": " + popData[person1id].name + " is initially vaccinated." );
+      enactEvent( popData, t, "recovery", person1id ); // Infect the patient
+      break;
+
+      break;
+    }
     case "recovery":
     {
       popData[person1id].compartment = "R";
-      output( "t=" + t + ": " + popData[person1id].name + " is now recovered." );
+      output( "t=" + t + ": " + popData[person1id].name + " is now removed." );
       break;
     }
     case "handshake":
@@ -300,7 +327,7 @@ function enactEvent(popData, t, event, person1id, person2id)
         }
         else
         {
-          output( "  ... but " + popData[person2id].name + " is already " + (popData[person2id].compartment == "I"?"infected":"recovered")+"." );
+          output( "  ... but " + popData[person2id].name + " is already " + (popData[person2id].compartment == "I"?"infected":"removed")+"." );
         }
       }
       else
@@ -344,6 +371,15 @@ function output( str, replace )
   }
 }
 
+// Parse a list of nonnegative integers, separated by space or comma
+function parseNatList( str )
+{
+  var result = str.split(/[,\s]/);
+  result = _.chain(result).map( i => parseInt(i,10) ).filter( i => (i >= 0) ).uniq().value();
+  return( result );
+
+}
+
 function updateUIState()
 {
   $(".activestate").removeClass("activestate");
@@ -370,9 +406,10 @@ function runButton()
 {
   gUIState = 1;
   var infectiousperiod = $("#infectiousperiod").val();
-  var patient0 = $("#patient0").val();
+  var initialinfectives = parseNatList( $("#initialinfectives").val() );
+  var initialvaccinated = parseNatList( $("#vaccinated").val() );
   output( "", true );
-  gOutbreakResult = simulate( gPopData, infectiousperiod, patient0 );
+  gOutbreakResult = simulate( gPopData, infectiousperiod, initialinfectives, initialvaccinated );
   gUIState = 2;
   updateUIState();
 }

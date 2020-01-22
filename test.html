@@ -60,7 +60,8 @@
       <div class="state1 uistateblock">
         <h2>Run outbreak</h2>
         Infectious period:<input type="number" id="infectiousperiod" value="4" min="1" class="state1"><br>
-        Patient 0 (id):<input type="number" id="patient0" value="0" min="0" class="state1"><br>
+        Initial infectives:<input type="text" id="initialinfectives" value="0" class="state1">(list of IDs eg <i>0,1,3</i>)</i><br>
+        Vaccinated people:<input type="text" id="vaccinated" value="" class="state1">(list of IDs eg <i>0,1,3</i>)<br>
         <input type="button" onclick="runButton()" value="Run outbreak" class="state1">
       </div>
       <div class="state2  uistateblock">
