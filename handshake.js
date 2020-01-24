@@ -238,18 +238,15 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
 
     for( j = 0; j < I.length; j++ )
     {
-      I[j].infectedTime++;  // TODO: should this occur before or after processing their handshake?
-      if( I[j].infectedTime >= infectiousPeriod )
+      I[j].infectedTime++;
+      if( (I[j].infectedTime > infectiousPeriod) || (I[j].handshakes.length == 0) )
       {
         enactEvent( popData, t, "recovery", I[j].id );
       }
       else
       {
-        if( I[j].handshakes.length > 0 )
-        {
-          enactEvent( popData, t, "handshake", I[j].id, I[j].handshakes[0] );
-          I[j].handshakes.shift();  // Remove this handshake now it is enacted
-        }
+        enactEvent( popData, t, "handshake", I[j].id, I[j].handshakes[0] );
+        I[j].handshakes.shift();  // Remove this handshake now it is enacted
       }
     }
     S = _.filter( popData, p=>(p && p.compartment == "S") );
