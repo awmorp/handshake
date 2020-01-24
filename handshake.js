@@ -10,6 +10,7 @@
 var gUIState = 0;
 
 // Global variables
+var gSimResult;
 var gPopData;
 var gInfectiousPeriod;
 var gPatient0;
@@ -392,9 +393,9 @@ function generateButton()
   var popsize = $("#popsize").val();
   var numshakes = $("#numshakes").val();
   var errorrate = $("#errorrate").val();
-  var result = makeShakes( popsize, numshakes, names, errorrate );
-  output( JSON.stringify(result, null, '  ' ), true );
-  gPopData = result.shakes;
+  gSimResult = makeShakes( popsize, numshakes, names, errorrate );
+  var jsonOut = JSON.stringify(gSimResult, null, '  ' );
+  output( jsonOut, true );
   gUIState = 1;
   updateUIState();
 }
@@ -402,6 +403,7 @@ function generateButton()
 function runButton()
 {
   gUIState = 1;
+  gPopData = JSON.parse(JSON.stringify(gSimResult.shakes)) // Make a copy of the simulated shakes so we can re-run the simulation if needed (deep copy)
   var infectiousperiod = $("#infectiousperiod").val();
   var initialinfectives = parseNatList( $("#initialinfectives").val() );
   var initialvaccinated = parseNatList( $("#vaccinated").val() );
