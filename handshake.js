@@ -258,7 +258,7 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   output( "Epidemic ended at t = " + t );
   // Get final susceptibles, recovereds
   output( S.length + " susceptible: "+ _.map(S, p=>p.id) );
-  output( R.length + " recovered: " + _.map(R, p=>p.id) );
+  output( R.length + " removed: " + _.map(R, p=>p.id) );
   return( log );
 }
 
