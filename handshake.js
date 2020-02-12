@@ -25,6 +25,7 @@ function Person(id, name, handshakes)
   this.handshakes = handshakes ? handshakes : [];  // List of id's of people with whom this person shook hands
   this.compartment = "S";  // Person's current compartment - S, I or R
   this.infectedTime = 0;  // How many timesteps they've been in I for
+  this.initialInfectionTime = null;  // Time at which this person became infected
 }
 
 function getPerson( array, id )
@@ -283,6 +284,7 @@ function enactEvent(popData, t, event, person1id, person2id)
       }
       popData[person1id].compartment = "I";
       popData[person1id].infectedTime = 0;
+      popData[person1id].initialInfectionTime = t;
       output( "t=" + t + ": " + popData[person1id].name + " is now infected!" );
       break;
     }
@@ -417,6 +419,12 @@ function exportCSVButton()
 {
   gUIState = 2;
   output( CSV.serialize( _.map(gOutbreakResult, x=>([x.S, x.I, x.R])) ), true );
+}
+
+function exportInfectionTimesButton()
+{
+  gUIState = 2;
+  output( CSV.serialize( _.map(gPopData, x=>([ x.id, x.infectedTime, x.initialInfectionTime ])) ), true );
 }
 
 function fitSIRButton()
