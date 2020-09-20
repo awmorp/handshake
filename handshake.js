@@ -198,6 +198,8 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   var t = 0;
   var S = [], I = [], R = [];
   var log = []; // record of # of S, I, R at each step
+  var eventLog = new Array; //
+  eventLog[0] = new Array;
   
   // Vaccinate
   for( var i = 0; i < initialvaccinated.length; i++ ) {
@@ -205,7 +207,7 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
       console.log( "Error: specified vaccinatee " + initialvaccinated[i] + " does not exist." );
     }
     /* Vaccinate the person */
-    enactEvent( popData, 0, "initialvaccinate", initialvaccinated[i] );
+    enactEvent( popData, eventLog, 0, "initialvaccinate", initialvaccinated[i] );
   }
 
   
@@ -215,7 +217,7 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
       console.log( "Error: specified initial infective " + initialinfectives[i] + " does not exist." );
     }
     /* Infect initial infective */
-    enactEvent( popData, 0, "initialinfection", initialinfectives[i] );
+    enactEvent( popData, eventLog, 0, "initialinfection", initialinfectives[i] );
   }
   S = _.filter( popData, p=>(p && p.compartment == "S") );
   I = _.filter( popData, p=>(p && p.compartment == "I") );
@@ -236,6 +238,7 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   while( I.length > 0 ) // until no infectives remain
   {  
     t++;
+    eventLog[t] = new Array;
     I = _.filter( popData, p=>(p.compartment == "I") );  // Get current infectives
 
     for( j = 0; j < I.length; j++ )
@@ -243,11 +246,11 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
       I[j].infectedTime++;
       if( (I[j].infectedTime > infectiousPeriod) || (I[j].handshakes.length == 0) )
       {
-        enactEvent( popData, t, "recovery", I[j].id );
+        enactEvent( popData, eventLog, t, "recovery", I[j].id );
       }
       else
       {
-        enactEvent( popData, t, "handshake", I[j].id, I[j].handshakes[0] );
+        enactEvent( popData, eventLog, t, "handshake", I[j].id, I[j].handshakes[0] );
         I[j].handshakes.shift();  // Remove this handshake now it is enacted
       }
     }
@@ -260,10 +263,11 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   // Get final susceptibles, recovereds
   output( S.length + " susceptible: "+ _.map(S, p=>p.id) );
   output( R.length + " removed: " + _.map(R, p=>p.id) );
+  console.log( eventLog );
   return( log );
 }
 
-function enactEvent(popData, t, event, person1id, person2id)
+function enactEvent(popData, eventLog, t, event, person1id, person2id)
 {
   switch( event ) {
     case "initialinfection":
@@ -273,7 +277,8 @@ function enactEvent(popData, t, event, person1id, person2id)
         return;
       }
       output( "t=" + t + ": " + popData[person1id].name + " is initially infective!" );
-      enactEvent( popData, t, "infection", person1id ); // Infect the patient
+      eventLog[t].push([t,"initialinfection",person1id]);
+      enactEvent( popData, eventLog, t, "infection", person1id ); // Infect the patient
       break;
     }
     case "infection":
@@ -286,6 +291,7 @@ function enactEvent(popData, t, event, person1id, person2id)
       popData[person1id].infectedTime = 0;
       popData[person1id].initialInfectionTime = t;
       output( "t=" + t + ": " + popData[person1id].name + " is now infected!" );
+      eventLog[t].push([t,"infection",person1id]);
       break;
     }
     case "initialvaccinate":
@@ -295,15 +301,15 @@ function enactEvent(popData, t, event, person1id, person2id)
         return;
       }
       output( "t=" + t + ": " + popData[person1id].name + " is initially vaccinated." );
-      enactEvent( popData, t, "recovery", person1id ); // Infect the patient
-      break;
-
+      eventLog[t].push([t,"initialvaccinate",person1id]);
+      enactEvent( popData, eventLog, t, "recovery", person1id ); // Infect the patient
       break;
     }
     case "recovery":
     {
       popData[person1id].compartment = "R";
       output( "t=" + t + ": " + popData[person1id].name + " is now removed." );
+      eventLog[t].push([t,"recovery",person1id]);
       break;
     }
     case "handshake":
@@ -314,13 +320,14 @@ function enactEvent(popData, t, event, person1id, person2id)
       }
 
       output( "t=" + t + ": " + popData[person1id].name + " shakes hands with " + popData[person2id].name );
+      eventLog[t].push([t,"handshake",person1id, person2id]);
       /* Decide if person2 becomes infected */
       if( popData[person1id].compartment == "I" )
       {
         if( popData[person2id].compartment == "S" )
         {
           // New infection has occurred!
-          enactEvent( popData, t, "infection", person2id );
+          enactEvent( popData, eventLog, t, "infection", person2id );
           
           // Drop any handshakes made by the infectee prior to infection.
           while( popData[person2id].handshakes.length > 0 && popData[person2id].handshakes.shift() != person1id ) {}
@@ -328,11 +335,13 @@ function enactEvent(popData, t, event, person1id, person2id)
         else
         {
           output( "  ... but " + popData[person2id].name + " is already " + (popData[person2id].compartment == "I"?"infected":"removed")+"." );
+          eventLog[t].push([t,"noinfection",person1id, person2id, (popData[person2id].compartment == "I"?"infected":"removed")]);
         }
       }
       else
       {
         output( "  ... but " + popData[person1id].name + " is not infectious." );
+        eventLog[t].push([t,"noinfection",person1id, person2id, "notinfectious"]);
       }
       break;
     }
