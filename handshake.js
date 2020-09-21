@@ -40,11 +40,16 @@ function getPerson( array, id )
 
 
 /* Generates a random set of numshakes handshakes between popsize people, optionally with data entry errors at given error rate (between 0 and 1) */
-function makeShakes(popsize, numshakes, names, errorrate)
+function makeShakes(popsize, numshakes, names, errorrate, seed)
 {
   var fails = [];
   var shakes = [];
 //  debugger;
+
+  /* Use a seeded pseudo-random number generator, as the builtin Javascript PRNG can't be seeded */
+  var random = aleaFromSeed(seed);
+  // convenient function to sample a random element from a list
+  var sample = function(list) {return list[random.nextInt(list.length)];}
   
   /* Initialise the shakes object */
   for( var i = 0; i < popsize; i++ ) {
@@ -57,14 +62,14 @@ function makeShakes(popsize, numshakes, names, errorrate)
   /* Perform handshakes */
   do {
     // Choose first handshake partner
-    var firstShaker = _.sample(remaining);
+    var firstShaker = sample(remaining);
     var potentialPartners = _
       .chain(remaining)  // Start with everyone who still needs to do more handshakes
       .difference(shakes[firstShaker].handshakes,[firstShaker]) // Can't shake hands with anyone you've already shaken hands with, or yourself
       .value();
     if( potentialPartners.length > 0 ) {
       // Found some potential shake partners. Select one at random and record the shake.
-      var secondShaker = _.sample(potentialPartners);
+      var secondShaker = sample(potentialPartners);
 //      console.log( firstShaker + " shakes with " + secondShaker );
       shakes[firstShaker].handshakes.push(secondShaker);
       shakes[secondShaker].handshakes.push(firstShaker);
@@ -79,10 +84,10 @@ function makeShakes(popsize, numshakes, names, errorrate)
     }
   } while( remaining.length > 0 );
   
-  addErrors( shakes, popsize, numshakes, errorrate);
+  addErrors( shakes, popsize, numshakes, errorrate, random);
   //  console.log( "Final: ", shakes );
   //  console.log( _.uniq(shakes.map(a => a.handshakes.length)).length==1?"Shakes successful!":"Shake fail" );
-  return( {"shakes": shakes,"fails":fails} );
+  return( {"shakes": shakes,"fails":fails, "seed": seed} );
 
 }
 
@@ -150,7 +155,7 @@ function makeShakes_old(popsize, numshakes, names, errorrate)
   return( {"shakes": shakes,"fails":fails} );
 }
 
-function addErrors( shakes, popsize, numshakes, errorrate)
+function addErrors( shakes, popsize, numshakes, errorrate, random)
 {
   /* Add some errors */
   if(!errorrate || errorrate < 0) errorrate = 0;
@@ -159,10 +164,10 @@ function addErrors( shakes, popsize, numshakes, errorrate)
   var alreadyErrored = [];
   while( numErrors-- > 0 ) {
     var errorTarget;
-    do { errorTarget = Math.floor(Math.random()*popsize) } while( _.contains(alreadyErrored, errorTarget) );
+    do { errorTarget = Math.floor(random()*popsize) } while( _.contains(alreadyErrored, errorTarget) );
     alreadyErrored.push(errorTarget);
     /* Three types of error: record completely missing, one or more handshakes missing, or handshakes incorrect */
-    switch( Math.floor(Math.random()*3) ) {
+    switch( Math.floor(random()*3) ) {
       case 0: // Erase the entire record (student didn't submit their data)
       {
         console.log("Erasing " + errorTarget );
@@ -171,7 +176,7 @@ function addErrors( shakes, popsize, numshakes, errorrate)
       }
       case 1: // Erase one or more handshakes (student forgot to enter some numbers)
       {
-        var k = Math.min( Math.floor(Math.random()*numshakes), shakes[errorTarget].handshakes.length );
+        var k = Math.min( Math.floor(random()*numshakes), shakes[errorTarget].handshakes.length );
         var dropped = []
         while( k-- > 0 ) {
           dropped.push(shakes[errorTarget].handshakes.pop());
@@ -183,7 +188,7 @@ function addErrors( shakes, popsize, numshakes, errorrate)
       {
         console.log( "Overwriting shakes of " + errorTarget );
         for( var i = 0; i < numshakes; i++ ) {
-          shakes[errorTarget].handshakes[i] = Math.floor(Math.random()*popsize);
+          shakes[errorTarget].handshakes[i] = Math.floor(random()*popsize);
         }
         break;
       }
@@ -404,7 +409,16 @@ function generateButton()
   var popsize = $("#popsize").val();
   var numshakes = $("#numshakes").val();
   var errorrate = $("#errorrate").val();
-  gSimResult = makeShakes( popsize, numshakes, names, errorrate );
+  var seed = $("#seed").val();
+  if( seed == "" ) {
+    seed = Math.floor(Math.random()*10000000);
+  } else {
+    seed = parseInt(seed);
+  }
+  $("#seed").val("");
+  $("#lastseed").text("Last seed: " + seed ).show();
+  
+  gSimResult = makeShakes( popsize, numshakes, names, errorrate, seed );
   var jsonOut = JSON.stringify(gSimResult, null, '  ' );
   output( jsonOut, true );
   gUIState = 1;
