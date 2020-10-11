@@ -274,6 +274,7 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
 
 function enactEvent(popData, eventLog, t, event, person1id, person2id)
 {
+  var msg;
   switch( event ) {
     case "initialinfection":
     {
@@ -281,8 +282,9 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         console.log( "Error: specified initial infective " + person1id + " does not exist" );
         return;
       }
-      output( "t=" + t + ": " + popData[person1id].name + " is initially infective!" );
-      eventLog[t].push([t,"initialinfection",person1id]);
+      msg = popData[person1id].name + " is initially infective!";
+      eventLog[t].push([t,"initialinfection",msg,person1id]);
+      output( "t=" + t + ": " + msg );
       enactEvent( popData, eventLog, t, "infection", person1id ); // Infect the patient
       break;
     }
@@ -295,8 +297,9 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
       popData[person1id].compartment = "I";
       popData[person1id].infectedTime = 0;
       popData[person1id].initialInfectionTime = t;
-      output( "t=" + t + ": " + popData[person1id].name + " is now infected!" );
-      eventLog[t].push([t,"infection",person1id]);
+      msg = popData[person1id].name + " is now infected!";
+      eventLog[t].push([t,"infection",msg, person1id]);
+      output( "t=" + t + ": " + msg );
       break;
     }
     case "initialvaccinate":
@@ -305,16 +308,18 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         console.log( "Error: specified vaccinatee " + person1id + " does not exist" );
         return;
       }
-      output( "t=" + t + ": " + popData[person1id].name + " is initially vaccinated." );
-      eventLog[t].push([t,"initialvaccinate",person1id]);
+      msg = popData[person1id].name + " is initially vaccinated.";
+      eventLog[t].push([t,"initialvaccinate",msg,person1id]);
+      output( "t=" + t + ": " + msg );
       enactEvent( popData, eventLog, t, "recovery", person1id ); // Infect the patient
       break;
     }
     case "recovery":
     {
       popData[person1id].compartment = "R";
-      output( "t=" + t + ": " + popData[person1id].name + " is now removed." );
-      eventLog[t].push([t,"recovery",person1id]);
+      msg = popData[person1id].name + " is now removed.";
+      eventLog[t].push([t,"recovery",msg,person1id]);
+      output( "t=" + t + ": " + msg );
       break;
     }
     case "handshake":
@@ -324,8 +329,9 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         return;
       }
 
-      output( "t=" + t + ": " + popData[person1id].name + " shakes hands with " + popData[person2id].name );
-      eventLog[t].push([t,"handshake",person1id, person2id]);
+      msg = popData[person1id].name + " shakes hands with " + popData[person2id].name;
+      eventLog[t].push([t,"handshake",msg,person1id, person2id]);
+      output( "t=" + t + ": " + msg );
       /* Decide if person2 becomes infected */
       if( popData[person1id].compartment == "I" )
       {
@@ -339,14 +345,16 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         }
         else
         {
-          output( "  ... but " + popData[person2id].name + " is already " + (popData[person2id].compartment == "I"?"infected":"removed")+"." );
-          eventLog[t].push([t,"noinfection",person1id, person2id, (popData[person2id].compartment == "I"?"infected":"removed")]);
+          msg = "  ... but " + popData[person2id].name + " is already " + (popData[person2id].compartment == "I"?"infected":"removed")+".";
+          eventLog[t].push([t,"noinfection",msg,person1id, person2id, (popData[person2id].compartment == "I"?"infected":"removed")]);
+          output( "t=" + t + ": " + msg );
         }
       }
       else
       {
-        output( "  ... but " + popData[person1id].name + " is not infectious." );
-        eventLog[t].push([t,"noinfection",person1id, person2id, "notinfectious"]);
+        msg = "  ... but " + popData[person1id].name + " is not infectious.";
+        eventLog[t].push([t,"noinfection",msg,person1id, person2id, "notinfectious"]);
+        output( "t=" + t + ": " + msg );
       }
       break;
     }
