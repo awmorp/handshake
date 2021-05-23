@@ -59,19 +59,19 @@ function generateAvatar( person )
   $.get( happyUrl, null, function( data ) {
 //    console.log( "Successfully received " + happyUrl, data );
     person.avatars.happy = $("<div class='avatar avatar_happy'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-    $("#avatars").append( person.avatars.happy );
+//    $("#avatars").append( person.avatars.happy );
   } ).fail( failCallback );
   // Get surprised avatar
   $.get( surprisedUrl, null, function( data ) {
 //    console.log( "Successfully received " + surprisedUrl, data );
     person.avatars.surprised = $("<div class='avatar avatar_surprised'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-    $("#avatars").append( person.avatars.surprised );
+//    $("#avatars").append( person.avatars.surprised );
   } ).fail( failCallback );
   // Get sad avatar
   $.get( sadUrl, null, function( data ) {
 //    console.log( "Successfully received " + sadUrl, data );
     person.avatars.sad = $("<div class='avatar avatar_sad'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-    $("#avatars").append( person.avatars.sad );
+//    $("#avatars").append( person.avatars.sad );
   } ).fail( failCallback );
 }
 
