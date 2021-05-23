@@ -8,11 +8,12 @@
   <script src="libs/underscore-min.js"></script>
   <script src="libs/js-arbit.js"></script>
   <script src="libs/csv.min.js"></script>
-  <script src="https://unpkg.com/optimization-js@latest/dist/optimization.js"></script>
+  <!--<script src="https://unpkg.com/optimization-js@latest/dist/optimization.js"></script>!-->
   <style>
     body {
       height: 100%;
       width: 100%;
+      font-family: sans-serif;
     }
     
     #flexcontainer {
@@ -35,6 +36,10 @@
       background: #ffffaa;
     }
     
+    #outputrow {
+      overflow: auto;
+    }
+    
     .output {
 //      flex: 1 1 auto;
       max-height: 200px;
@@ -42,6 +47,38 @@
       width: 33%;
       overflow: scroll;
     }
+    
+    #stage {
+      padding-left: 4%;
+    }
+    
+    .circle-box {
+      display: inline-block;
+      margin-left: 2%;
+      margin-right: 2%;
+
+    }
+    
+    .circle-label {
+      text-align: center;
+      font-size: xx-large;
+    }
+    
+    .circle {
+      border-radius: 50%;
+      width: 25vw;
+      height: 25vw;
+      display: inline-block;
+    }
+    
+    .avatar {
+      text-align: center;
+    }
+    
+    .avatar_svg {
+      width: 50px;
+    }
+      
   </style>
  </head>
  <body onload="updateUIState();">
@@ -80,5 +117,23 @@
       <pre id="output1" class="output"></pre>
       <pre id="output2" class="output"></pre>
     </div>
+    <div id="stage">
+      <div class="circle-box">
+        <div class="circle" style="background: green; border: 2px solid darkgreen;"></div>
+        <br>
+        <div class="circle-label">Susceptible</div>
+      </div>
+      <div class="circle-box">
+        <div class="circle" style="background: red; border: 2px solid darkred;"></div>
+        <br>
+        <div class="circle-label">Infectious</div>
+      </div>
+      <div class="circle-box">
+        <div class="circle" style="background: darkgrey; border: 2px solid grey;"></div>
+        <br>
+        <div class="circle-label">Removed</div>
+      </div>
+    </div>
+   <div id="avatars" style="width: 100px;"></div>
  </body>
 </html>

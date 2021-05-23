@@ -18,7 +18,7 @@ var gOutbreakResult;
 
 
 /* Person object, including their id, name, handshakes */
-function Person(id, name, handshakes)
+function Person(id, name, handshakes, avatarSeed )
 {
   this.id = id;  // A unique identifier number
   this.name = name;  // Display name
@@ -26,6 +26,8 @@ function Person(id, name, handshakes)
   this.compartment = "S";  // Person's current compartment - S, I or R
   this.infectedTime = 0;  // How many timesteps they've been in I for
   this.initialInfectionTime = null;  // Time at which this person became infected
+  this.avatarSeed = avatarSeed;
+  generateAvatar( this );  // Display avatar
 }
 
 function getPerson( array, id )
@@ -36,6 +38,41 @@ function getPerson( array, id )
     console.log( "getPerson: No entry for id " + id );
     return( null );
   }
+}
+
+function generateAvatar( person )
+{
+  var baseUrl = "https://avatars.dicebear.com/api/human/" + person.avatarSeed + ".svg"
+//  console.log( "Requesting " + baseUrl );
+  var happyUrl = baseUrl + "?mood=happy";
+  var surprisedUrl = baseUrl + "?mood=surprised";
+  var sadUrl = baseUrl + "?mood=sad";
+  person.avatars = new Object();
+  
+  var failCallback = function( data ) {
+    // HTTP request to dicebear failed.
+    // TODO: Use fallback avatars for this person.
+    console.log( "Dicebear request failed", data );
+  };
+  
+  // Get happy avatar
+  $.get( happyUrl, null, function( data ) {
+//    console.log( "Successfully received " + happyUrl, data );
+    person.avatars.happy = $("<div class='avatar avatar_happy'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    $("#avatars").append( person.avatars.happy );
+  } ).fail( failCallback );
+  // Get surprised avatar
+  $.get( surprisedUrl, null, function( data ) {
+//    console.log( "Successfully received " + surprisedUrl, data );
+    person.avatars.surprised = $("<div class='avatar avatar_surprised'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    $("#avatars").append( person.avatars.surprised );
+  } ).fail( failCallback );
+  // Get sad avatar
+  $.get( sadUrl, null, function( data ) {
+//    console.log( "Successfully received " + sadUrl, data );
+    person.avatars.sad = $("<div class='avatar avatar_sad'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    $("#avatars").append( person.avatars.sad );
+  } ).fail( failCallback );
 }
 
 
@@ -53,7 +90,7 @@ function makeShakes(popsize, numshakes, names, errorrate, seed)
   
   /* Initialise the shakes object */
   for( var i = 0; i < popsize; i++ ) {
-    shakes[i] = new Person(i, names[i % names.length] + (Math.floor(i / names.length) > 0 ? "_"+Math.floor(i / names.length):""));
+    shakes[i] = new Person(i, names[i % names.length] + (Math.floor(i / names.length) > 0 ? "_"+Math.floor(i / names.length):""), null, random());
   }
   if( numshakes == 0 || popsize == 0 ) return( {"shakes": shakes,"fails":fails} ); // Trivial cases, nothing to do
   
