@@ -50,9 +50,12 @@ function generateAvatar( person )
   person.avatars = new Object();
   
   var failCallback = function( data ) {
-    // HTTP request to dicebear failed.
-    // TODO: Use fallback avatars for this person.
+    // HTTP request to dicebear failed. Load default avatars instead.
     console.log( "Dicebear request failed", data );
+    person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
+    person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
+    person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarSadSVG).addClass("avatar_svg") );
+    person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarSurprisedSVG).addClass("avatar_svg") );
   };
   
   // Get susceptible (happy) avatar
@@ -61,7 +64,7 @@ function generateAvatar( person )
     person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).clone().addClass("avatar_svg") );
     person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
   } ).fail( failCallback );
-  // Get infectious (surprised) avatar
+  // Get infectious (sad) avatar
   $.get( iUrl, null, function( data ) {
 //    console.log( "Successfully received " + iUrl, data );
     person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
