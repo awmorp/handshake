@@ -44,9 +44,9 @@ function generateAvatar( person )
 {
   var baseUrl = "https://avatars.dicebear.com/api/human/" + person.avatarSeed + ".svg"
 //  console.log( "Requesting " + baseUrl );
-  var happyUrl = baseUrl + "?mood=happy";
-  var surprisedUrl = baseUrl + "?mood=surprised";
-  var sadUrl = baseUrl + "?mood=sad";
+  var sUrl = baseUrl + "?mood=happy";
+  var iUrl = baseUrl + "?mood=sad";
+  var mUrl = baseUrl + "?mood=surprised";
   person.avatars = new Object();
   
   var failCallback = function( data ) {
@@ -55,23 +55,21 @@ function generateAvatar( person )
     console.log( "Dicebear request failed", data );
   };
   
-  // Get happy avatar
-  $.get( happyUrl, null, function( data ) {
-//    console.log( "Successfully received " + happyUrl, data );
-    person.avatars.happy = $("<div class='avatar avatar_happy'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-//    $("#avatars").append( person.avatars.happy );
+  // Get susceptible (happy) avatar
+  $.get( sUrl, null, function( data ) {
+//    console.log( "Successfully received " + sUrl, data );
+    person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).clone().addClass("avatar_svg") );
+    person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
   } ).fail( failCallback );
-  // Get surprised avatar
-  $.get( surprisedUrl, null, function( data ) {
-//    console.log( "Successfully received " + surprisedUrl, data );
-    person.avatars.surprised = $("<div class='avatar avatar_surprised'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-//    $("#avatars").append( person.avatars.surprised );
+  // Get infectious (surprised) avatar
+  $.get( iUrl, null, function( data ) {
+//    console.log( "Successfully received " + iUrl, data );
+    person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
   } ).fail( failCallback );
-  // Get sad avatar
-  $.get( sadUrl, null, function( data ) {
-//    console.log( "Successfully received " + sadUrl, data );
-    person.avatars.sad = $("<div class='avatar avatar_sad'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
-//    $("#avatars").append( person.avatars.sad );
+  // Get moving (surprised) avatar
+  $.get( mUrl, null, function( data ) {
+//    console.log( "Successfully received " + rUrl, data );
+    person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
   } ).fail( failCallback );
 }
 
@@ -529,16 +527,75 @@ function fitSIRButton()
 }
 
 
-function renderAvatars() {
+function renderAvatars()
+{
   console.log( "renderAvatars", gSimResult.shakes );
-  $("#circle_s").empty();
+  // Cache some key DOM elements
+  const sCircle = $("#circle_s");
+  const iCircle = $("#circle_i");
+  const rCircle = $("#circle_r");
+
+  $(".circle").empty();  // Empty all circles
   _.each( gSimResult.shakes, function(x) {
     x.pos_theta = Math.random()*2*Math.PI;
     x.pos_r = Math.random()*0.8;
     var leftp = ((Math.cos(x.pos_theta)*x.pos_r) + 1)/2*100;
     var topp = ((Math.sin(x.pos_theta)*x.pos_r) + 1)/2*100;
-    console.log( "render "+ x.name + "at "+  leftp +"%, " + topp + "%" );
-    $(x.avatars.happy).css({left: leftp + "%", top: topp + "%"});
-    $("#circle_s").append(x.avatars.happy);
+//    console.log( "render "+ x.name + " at "+  leftp +"%, " + topp + "%" );
+    $(x.avatars.susceptible).css({left: leftp + "%", top: topp + "%"});
+    sCircle.append(x.avatars.susceptible);
+    $(x.avatars.infectious).css({left: leftp + "%", top: topp + "%", visibility: "hidden"});
+    iCircle.append(x.avatars.infectious);
+    $(x.avatars.removed).css({left: leftp + "%", top: topp + "%", visibility: "hidden"});
+    rCircle.append(x.avatars.removed);
   } );
+}
+
+function animateAvatar( avatar, start, end )
+{
+  // Move avatar element from location of start element to location of end element.
+  const stage = $("#stage");
+  start = $(start);
+  end = $(end);
+  avatar = $(avatar);
+  // calculate location of start and end points relative to the stage
+  const startx = start.offset().left - stage.offset().left;
+  const starty = start.offset().top - stage.offset().top;
+  const endx = end.offset().left - stage.offset().left;
+  const endy = end.offset().top - stage.offset().top;
+  
+  console.log( "Animating from " + startx + ", " + starty + "  to  " + endx + ", " + endy );
+  
+  start.css({visibility: "hidden"});
+  avatar.css({left: startx + "px", top: starty + "px", visibility: "visible"});
+  stage.append(avatar);
+//  avatar.animate( { left: endx + "px", top: endy + "px"}, 1000, "linear", function() { avatar.detach(); end.css({visibility: "visible"}); } );
+  var bezier_params = {
+    start: { 
+      x: startx, 
+      y: starty, 
+      angle: -45
+    },	
+    end: { 
+      x:endx,
+      y:endy, 
+      angle: 45
+    }
+  }
+  avatar.animate( {path : new $.path.bezier(bezier_params)}, 1000, function() { avatar.detach(); end.css({visibility: "visible"}); } );
+}
+
+var i = 0;
+function go()
+{
+  var pp = gSimResult.shakes[i];
+  animateAvatar(pp.avatars.moving, pp.avatars.susceptible, pp.avatars.infectious);
+  i++;
+}
+var j = 0;
+function go2()
+{
+  var pp = gSimResult.shakes[j];
+  animateAvatar(pp.avatars.moving, pp.avatars.infectious, pp.avatars.removed);
+  j++;
 }

@@ -3,12 +3,13 @@
  <head>
   <meta charset="utf-8">
   <title>The Handshake Game</title>
-  <script src="handshake.js"></script>
   <script src="libs/jquery-3.3.1.min.js"></script>
+  <script src="libs/jquery.path.js"></script>
   <script src="libs/underscore-min.js"></script>
   <script src="libs/js-arbit.js"></script>
   <script src="libs/csv.min.js"></script>
   <!--<script src="https://unpkg.com/optimization-js@latest/dist/optimization.js"></script>!-->
+  <script src="handshake.js"></script>
   <style>
     body {
       height: 100%;
@@ -50,6 +51,7 @@
     
     #stage {
       padding-left: 4%;
+      position: relative;
     }
     
     .circle-box {
@@ -77,8 +79,19 @@
       position: absolute;
     }
     
+    .avatar_name {
+      background: #cfcfcf;
+      border: 1px solid gray;
+      padding: 1px;
+    }
+    
     .avatar_svg {
       width: 50px;
+    }
+    
+    .avatar_moving {
+      z-index: 10;
+      background: cyan; /* for debugging */
     }
   </style>
  </head>
@@ -137,5 +150,6 @@
       </div>
     </div>
    <div id="avatars" style="width: 100px;"></div>
+   <input type="button" onclick="go()" value="Do something">
  </body>
 </html>
