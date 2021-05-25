@@ -69,10 +69,12 @@
       width: 25vw;
       height: 25vw;
       display: inline-block;
+      position: relative;
     }
     
     .avatar {
       text-align: center;
+      position: absolute;
     }
     
     .avatar_svg {
@@ -103,6 +105,7 @@
         Initial infectives:<input type="text" id="initialinfectives" value="0" class="state1">(list of IDs eg <i>0,1,3</i>)</i><br>
         Vaccinated people:<input type="text" id="vaccinated" value="" class="state1">(list of IDs eg <i>0,1,3</i>)<br>
         <input type="button" onclick="runButton()" value="Run outbreak" class="state1">
+        <input type="button" onclick="renderAvatars()" value="Render avatars" class="state1">
       </div>
       <div class="state2  uistateblock">
         <h2>Fit model</h2>
@@ -118,17 +121,17 @@
     </div>
     <div id="stage">
       <div class="circle-box">
-        <div class="circle" style="background: green; border: 2px solid darkgreen;"></div>
+        <div class="circle" id="circle_s" style="background: green; border: 2px solid darkgreen;"></div>
         <br>
         <div class="circle-label">Susceptible</div>
       </div>
       <div class="circle-box">
-        <div class="circle" style="background: red; border: 2px solid darkred;"></div>
+        <div class="circle" id="circle_i" style="background: red; border: 2px solid darkred;"></div>
         <br>
         <div class="circle-label">Infectious</div>
       </div>
       <div class="circle-box">
-        <div class="circle" style="background: darkgrey; border: 2px solid grey;"></div>
+        <div class="circle" id="circle_r" style="background: darkgrey; border: 2px solid grey;"></div>
         <br>
         <div class="circle-label">Removed</div>
       </div>

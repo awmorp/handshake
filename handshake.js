@@ -527,3 +527,18 @@ function fitSIRButton()
   
   
 }
+
+
+function renderAvatars() {
+  console.log( "renderAvatars", gSimResult.shakes );
+  $("#circle_s").empty();
+  _.each( gSimResult.shakes, function(x) {
+    x.pos_theta = Math.random()*2*Math.PI;
+    x.pos_r = Math.random()*0.8;
+    var leftp = ((Math.cos(x.pos_theta)*x.pos_r) + 1)/2*100;
+    var topp = ((Math.sin(x.pos_theta)*x.pos_r) + 1)/2*100;
+    console.log( "render "+ x.name + "at "+  leftp +"%, " + topp + "%" );
+    $(x.avatars.happy).css({left: leftp + "%", top: topp + "%"});
+    $("#circle_s").append(x.avatars.happy);
+  } );
+}
