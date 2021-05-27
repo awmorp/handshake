@@ -16,6 +16,8 @@
       height: 100%;
       width: 100%;
       font-family: sans-serif;
+      position: absolute;
+      margin-top: 0;
     }
     
     #flexcontainer {
@@ -92,11 +94,31 @@
     
     .avatar_moving {
       z-index: 10;
-      background: cyan; /* for debugging */
+      /* background: cyan; */ /* for debugging */
     }
+    
+    #avatar_load_notification {
+      display: none;
+      position: fixed;
+      width: 20%;
+      left: 40%;
+      top: 0px;
+      text-align: center;
+      background: #cfcfcf;
+      border: 1px solid grey;
+    }
+    
+    .avatar_load_notification_good {
+      background: lightgreen !important;
+    }
+    .avatar_load_notification_bad {
+      background: orange !important;
+    }
+
   </style>
  </head>
  <body onload="updateUIState();">
+  <div id="avatar_load_notification">Loading avatars</div>
   <h1>The handshake game</h1>
   <div id="flexcontainer">
     <div id="uistateblockcontainer">
@@ -152,5 +174,6 @@
     </div>
    <div id="avatars" style="width: 100px;"></div>
    <input type="button" onclick="go()" value="Do something">
+   <input type="button" onclick="go2()" value="Do something else">
  </body>
 </html>

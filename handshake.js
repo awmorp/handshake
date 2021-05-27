@@ -16,6 +16,10 @@ var gInfectiousPeriod;
 var gPatient0;
 var gOutbreakResult;
 
+var gAvatarsToLoad = 0;
+var gAvatarsLoaded = 0;
+var gAvatarsFailed = 0;
+
 
 /* Person object, including their id, name, handshakes */
 function Person(id, name, handshakes, avatarSeed )
@@ -52,28 +56,40 @@ function generateAvatar( person )
   var failCallback = function( data ) {
     // HTTP request to dicebear failed. Load default avatars instead.
     console.log( "Dicebear request failed", data );
+    gAvatarsFailed++;
     person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
     person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
     person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarSadSVG).addClass("avatar_svg") );
     person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarSurprisedSVG).addClass("avatar_svg") );
+    updateAvatarNote();
   };
   
   // Get susceptible (happy) avatar
+  gAvatarsToLoad++;
   $.get( sUrl, null, function( data ) {
 //    console.log( "Successfully received " + sUrl, data );
     person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).clone().addClass("avatar_svg") );
     person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    gAvatarsLoaded++;
+    updateAvatarNote();
   } ).fail( failCallback );
   // Get infectious (sad) avatar
+  gAvatarsToLoad++;
   $.get( iUrl, null, function( data ) {
 //    console.log( "Successfully received " + iUrl, data );
     person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    gAvatarsLoaded++;
+    updateAvatarNote();
   } ).fail( failCallback );
   // Get moving (surprised) avatar
+  gAvatarsToLoad++;
   $.get( mUrl, null, function( data ) {
 //    console.log( "Successfully received " + rUrl, data );
     person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
+    gAvatarsLoaded++;
+    updateAvatarNote();
   } ).fail( failCallback );
+  updateAvatarNote();
 }
 
 
@@ -586,6 +602,23 @@ function animateAvatar( avatar, start, end )
     }
   }
   avatar.animate( {path : new $.path.bezier(bezier_params)}, 1000, function() { avatar.detach(); end.css({visibility: "visible"}); } );
+}
+
+function updateAvatarNote()
+{
+  const note = $("#avatar_load_notification");
+  if( gAvatarsToLoad == 0 ) {
+    note.hide();
+    return;
+  }
+  note.text( "Loading avatars... (loaded " + gAvatarsLoaded +"/"+gAvatarsToLoad+(gAvatarsFailed ? ", " + gAvatarsFailed + " failed":"") + ")" );
+  if( gAvatarsFailed ) {
+    note.removeClass("avatar_load_notification_good").addClass("avatar_load_notification_bad");
+  } else if( gAvatarsLoaded ) {
+    note.addClass("avatar_load_notification_good").removeClass("avatar_load_notification_bad");
+  }
+  note.show();
+  if( gAvatarsLoaded + gAvatarsFailed == gAvatarsToLoad ) { note.delay(gAvatarsFailed?5000:1000).fadeOut(1000); }
 }
 
 var i = 0;
