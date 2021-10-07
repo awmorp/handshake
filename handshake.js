@@ -553,20 +553,26 @@ function renderAvatars()
   const sCircle = $("#circle_s");
   const iCircle = $("#circle_i");
   const rCircle = $("#circle_r");
+  const circleDiameter = sCircle.width();
 
   $(".circle").empty();  // Empty all circles
-  _.each( gSimResult.shakes, function(x) {
-    x.pos_theta = Math.random()*2*Math.PI;
-    x.pos_r = Math.random()*0.8;
-    var leftp = ((Math.cos(x.pos_theta)*x.pos_r) + 1)/2*100;
-    var topp = ((Math.sin(x.pos_theta)*x.pos_r) + 1)/2*100;
-//    console.log( "render "+ x.name + " at "+  leftp +"%, " + topp + "%" );
-    $(x.avatars.susceptible).css({left: leftp + "%", top: topp + "%"});
-    sCircle.append(x.avatars.susceptible);
-    $(x.avatars.infectious).css({left: leftp + "%", top: topp + "%", visibility: "hidden"});
-    iCircle.append(x.avatars.infectious);
-    $(x.avatars.removed).css({left: leftp + "%", top: topp + "%", visibility: "hidden"});
-    rCircle.append(x.avatars.removed);
+  _.each( gSimResult.shakes, function(p) {
+    p.pos_theta = Math.random()*2*Math.PI;
+    p.pos_r = Math.random()*0.8;
+    
+    /* We have to add them to the DOM here so that we can use their width and height in the position calculations. Elements don't have a width or height until added. */
+    sCircle.append(p.avatars.susceptible);
+    iCircle.append(p.avatars.infectious);
+    rCircle.append(p.avatars.removed);
+    
+    var awidth = p.avatars.susceptible.width();
+    var aheight = p.avatars.susceptible.height();
+    var leftp = ((Math.cos(p.pos_theta)*p.pos_r) + 1)/2*circleDiameter - awidth/2;
+    var topp = ((Math.sin(p.pos_theta)*p.pos_r) + 1)/2*circleDiameter - aheight/2;
+//    console.log( "render "+ p.name + " at "+  leftp +"%, " + topp + "%" );
+    $(p.avatars.susceptible).css({left: leftp + "px", top: topp + "px"});
+    $(p.avatars.infectious).css({left: leftp + "px", top: topp + "px", visibility: "hidden"});
+    $(p.avatars.removed).css({left: leftp + "px", top: topp + "px", visibility: "hidden"});
   } );
 }
 
