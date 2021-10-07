@@ -583,9 +583,9 @@ function animateAvatar( avatar, start, end )
   const endx = end.offset().left - stage.offset().left;
   const endy = end.offset().top - stage.offset().top;
   
-  console.log( "Animating from " + startx + ", " + starty + "  to  " + endx + ", " + endy );
+//  console.log( "Animating from " + startx + ", " + starty + "  to  " + endx + ", " + endy );
   
-  start.css({visibility: "hidden"});
+  start.remove();
   avatar.css({left: startx + "px", top: starty + "px", visibility: "visible"});
   stage.append(avatar);
 //  avatar.animate( { left: endx + "px", top: endy + "px"}, 1000, "linear", function() { avatar.detach(); end.css({visibility: "visible"}); } );
