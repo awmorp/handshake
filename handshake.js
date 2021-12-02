@@ -20,6 +20,8 @@ var gAvatarsToLoad = 0;
 var gAvatarsLoaded = 0;
 var gAvatarsFailed = 0;
 
+var gLoadAvatars = true;  // Set this to false to just use default avatars rather than loading randomised avatars from dicebear
+
 
 /* Person object, including their id, name, handshakes */
 function Person(id, name, handshakes, avatarSeed )
@@ -63,6 +65,12 @@ function generateAvatar( person )
     person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarSurprisedSVG).addClass("avatar_svg") );
     updateAvatarNote();
   };
+
+  if( !gLoadAvatars ) {
+    // Don't load remote avatars, just use the default
+    failCallback( null );
+    return;
+  }
   
   // Get susceptible (happy) avatar
   gAvatarsToLoad++;
