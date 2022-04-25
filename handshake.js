@@ -16,7 +16,8 @@ var gEventLog;
 
 var gAnimate = true; // whether to show the animation. If false, just do the outbreak calculation, don't animate it.
 var gAnimationSpeed = 50;
-F
+var gAnimationNumSteps;
+
 var gAvatarsToLoad = 0;
 var gAvatarsLoaded = 0;
 var gAvatarsFailed = 0;
@@ -529,6 +530,7 @@ function updateUIState()
   $(".activestate").removeClass("activestate");
   var selector = ".state" + gUIState;
   $(selector).addClass("activestate");
+  updateAnimationCheckbox();
   updateSpeedSlider();
 }
 
@@ -565,6 +567,7 @@ function runButton()
   var initialvaccinated = parseNatList( $("#vaccinated").val() );
   output( "", true );
   gOutbreakResult = simulate( gPopulationData, infectiousperiod, initialinfectives, initialvaccinated );
+  gAnimationNumSteps = gEventLog.length;
   if( gAnimate ) {
     doAnimate();
   }
@@ -590,7 +593,7 @@ function exportInfectionTimesButton()
 // linear interpolation in between.
 function speedToDelay( speed )
 {
-  var numSteps = gEventLog.length;
+  var numSteps = gAnimationNumSteps ? gAnimationNumSteps : 1;
   if( numSteps > 20 ) numSteps += 10; // in this case, the first and last 10 steps are half as fast
   
   var totalDuration = (5 + (speed/100)*(2*60-5))*1000;

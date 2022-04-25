@@ -144,12 +144,13 @@
          <br>
          <input type="checkbox" id="animatecheckbox" name="animatecheckbox" checked onchange="updateAnimationCheckbox();"><label for="animatecheckbox">Animate</label>
          <div id="animspeedbox">
-         <input type="range" id="animationspeed" name="animationspeed" min="0" max="100" value="50" step="1" oninput="updateSpeedSlider();">
-         <br>
-         Animation will take <span id="animspeedcaption"></span>
+          Animation speed: <input type="range" id="animationspeed" name="animationspeed" min="0" max="100" value="50" step="1" oninput="updateSpeedSlider();">
+          <br>
+          Animation will take about <span id="animspeedcaption"></span>
          </div>
-         <input type="checkbox" id="loadavatars" name="loadavatars" checked onchange="gLoadAvatars=document.getElementById('loadavatars').checked"><label for="loadavatars">Load avatars</label>
-
+         <div>
+          <input type="checkbox" id="loadavatars" name="loadavatars" checked onchange="gLoadAvatars=document.getElementById('loadavatars').checked"><label for="loadavatars">Load avatars</label>
+          </div>
 
       </div>
       <div class="state2  uistateblock">
