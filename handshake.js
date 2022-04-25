@@ -11,16 +11,22 @@ var gUIState = 0;
 
 // Global variables
 var gPopulationData;
-var gInfectiousPeriod;
-var gPatient0;
 var gOutbreakResult;
 var gEventLog;
 
+var gAnimate = true; // whether to show the animation. If false, just do the outbreak calculation, don't animate it.
+var gAnimationSpeed = 50;
+F
 var gAvatarsToLoad = 0;
 var gAvatarsLoaded = 0;
 var gAvatarsFailed = 0;
+var gAvatarsRendered = false;
 
 var gLoadAvatars = false;  // Set this to false to just use default avatars rather than loading randomised avatars from dicebear
+
+var gDebugLevel = 0; // Set this higher to print more debug messages to console
+
+var gAnimStartTime, gAnimEndTime;
 
 /* Person object, including their id, name, handshakes */
 function Person(id, name, handshakes, avatarSeed )
@@ -48,7 +54,7 @@ function getPerson( array, id )
 function generateAvatar( person )
 {
   var baseUrl = "https://avatars.dicebear.com/api/human/" + person.avatarSeed + ".svg"
-//  console.log( "Requesting " + baseUrl );
+  if( gDebugLevel > 2 ) { console.log( "Requesting " + baseUrl ); }
   var sUrl = baseUrl + "?mood=happy";
   var iUrl = baseUrl + "?mood=sad";
   var mUrl = baseUrl + "?mood=surprised";
@@ -56,7 +62,7 @@ function generateAvatar( person )
   
   var failCallback = function( data ) {
     // HTTP request to dicebear failed. Load default avatars instead.
-    console.log( "Dicebear request failed", data );
+    if( gLoadAvatars ) console.log( "Dicebear request failed", data );
     gAvatarsFailed++;
     person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
     person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(defaultAvatarHappySVG).addClass("avatar_svg") );
@@ -74,7 +80,7 @@ function generateAvatar( person )
   // Get susceptible (happy) avatar
   gAvatarsToLoad++;
   $.get( sUrl, null, function( data ) {
-//    console.log( "Successfully received " + sUrl, data );
+  if( gDebugLevel > 2 ) { console.log( "Successfully received " + sUrl, data ); }
     person.avatars.susceptible = $("<div class='avatar avatar_susceptible'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).clone().addClass("avatar_svg") );
     person.avatars.removed = $("<div class='avatar avatar_removed'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
     gAvatarsLoaded++;
@@ -83,7 +89,7 @@ function generateAvatar( person )
   // Get infectious (sad) avatar
   gAvatarsToLoad++;
   $.get( iUrl, null, function( data ) {
-//    console.log( "Successfully received " + iUrl, data );
+    if( gDebugLevel > 2 ) { console.log( "Successfully received " + iUrl, data ); }
     person.avatars.infectious = $("<div class='avatar avatar_infectious'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
     gAvatarsLoaded++;
     updateAvatarNote();
@@ -91,7 +97,7 @@ function generateAvatar( person )
   // Get moving (surprised) avatar
   gAvatarsToLoad++;
   $.get( mUrl, null, function( data ) {
-//    console.log( "Successfully received " + rUrl, data );
+    if( gDebugLevel > 2 ) { console.log( "Successfully received " + rUrl, data ); }
     person.avatars.moving = $("<div class='avatar avatar_moving'><div class='avatar_name'>"+person.name+"</div></div>").prepend( $(data.firstChild).addClass("avatar_svg") );
     gAvatarsLoaded++;
     updateAvatarNote();
@@ -231,7 +237,7 @@ function addErrors( shakes, popsize, numshakes, errorrate, random)
     switch( Math.floor(random()*3) ) {
       case 0: // Erase the entire record (student didn't submit their data)
       {
-        console.log("Erasing " + errorTarget );
+        if( gDebugLevel > 1 ) { console.log("Erasing " + errorTarget ); }
         delete shakes[errorTarget];
         break;
       }
@@ -242,12 +248,12 @@ function addErrors( shakes, popsize, numshakes, errorrate, random)
         while( k-- > 0 ) {
           dropped.push(shakes[errorTarget].handshakes.pop());
         }
-        console.log("Forgetting that " + errorTarget + " shook " + dropped );
+        if( gDebugLevel > 1 ) { console.log("Forgetting that " + errorTarget + " shook " + dropped ); }
         break;
       }
       case 2: // Replace correct handshakes with random numbers (student made data entry errors)
       {
-        console.log( "Overwriting shakes of " + errorTarget );
+        if( gDebugLevel > 1 ) { console.log( "Overwriting shakes of " + errorTarget ); }
         for( var i = 0; i < numshakes; i++ ) {
           shakes[errorTarget].handshakes[i] = Math.floor(random()*popsize);
         }
@@ -327,15 +333,15 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   // Get final susceptibles, recovereds
   output( S.length + " susceptible: "+ _.map(S, p=>p.id) );
   output( R.length + " removed: " + _.map(R, p=>p.id) );
-  console.log( eventLog );
+  if( gDebugLevel > 0 ) { console.log( "eventLog is:", eventLog ); }
   gEventLog = eventLog;
   return( log );
 }
 
 function enactEvent(popData, eventLog, t, event, person1id, person2id)
 {
-  var msg;
-  var func;
+  var msg, msg2;
+  var func, func2;
   const person1 = popData[person1id];
   const person2 = (person2id ? popData[person2id] : null);
   switch( event ) {
@@ -364,7 +370,6 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
       person1.infectedTime = 0;
       person1.initialInfectionTime = t;
       msg = person1.name + " is now infected!";
-      console.log( "XXX person1 is ", person1 );
       func = function() {
         showMessage( msg, "red" );
         animateAvatar(person1.avatars.moving, person1.avatars.susceptible, person1.avatars.infectious);
@@ -433,21 +438,21 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         }
         else
         {
-          msg = "  ... but " + person2.name + " is already " + (person2.compartment == "I"?"infected":"removed")+".";
-          func = function() {
-            showMessage( msg, "yellow" );
+          msg2 = "  ... but " + person2.name + " is already " + (person2.compartment == "I"?"infected":"removed")+".";
+          func2 = function() {
+            showMessage( msg2, "yellow" );
           }
-          eventLog.push([t,"noinfection",msg,func,person1id, person2id, (person2.compartment == "I"?"infected":"removed")]);
+          eventLog.push([t,"noinfection",msg,func2,person1id, person2id, (person2.compartment == "I"?"infected":"removed")]);
           output( "t=" + t + ": " + msg );
         }
       }
       else
       {
-        msg = "  ... but " + person1.name + " is not infectious.";
-        func = function() {
-            showMessage( msg, "yellow" );
+        msg2 = "  ... but " + person1.name + " is not infectious.";
+        func2 = function() {
+            showMessage( msg2, "yellow" );
           }
-        eventLog.push([t,"noinfection",msg,func,person1id, person2id, "notinfectious"]);
+        eventLog.push([t,"noinfection",msg,func2,person1id, person2id, "notinfectious"]);
         output( "t=" + t + ": " + msg );
       }
       break;
@@ -463,20 +468,22 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
 
 function showMessage( msg, colour )
 {
-  console.log( "showMessage ("+colour+"): " + msg );
+  if( gDebugLevel > 0 ) { console.log( "showMessage ("+colour+"): " + msg ); }
 }
 
 function animateEvents( eventLog )
 {
   if( eventLog.length > 0 ) {
     var e = eventLog.shift();
+    if( gDebugLevel > 2 ) { console.log( "animateEvent event is: ", e ); }
     if( e[3] ) {
-      console.log( "Calling func..." );
       e[3]();
-    } else { console.log(  "No func!" ); }
-    setTimeout( function() {animateEvents( eventLog )}, 250 );
+    }
+    setTimeout( function() {animateEvents( eventLog )}, speedToDelay(gAnimationSpeed) );
   } else {
-    console.log( "End of the line!" );
+    showMessage( "Finished.", "yellow" );
+    gAnimEndTime = Date.now();
+    console.log( "Finished at: ", gAnimEndTime, " duration (seconds): ", (gAnimEndTime - gAnimStartTime)/1000 );
   }
 }
 
@@ -522,6 +529,7 @@ function updateUIState()
   $(".activestate").removeClass("activestate");
   var selector = ".state" + gUIState;
   $(selector).addClass("activestate");
+  updateSpeedSlider();
 }
 
 
@@ -552,12 +560,14 @@ function generateButton()
 function runButton()
 {
   gUIState = 1;
-//  gPopDataCopy = JSON.parse(JSON.stringify(gPopulationData)) // Make a copy of the simulated shakes so we can re-run the simulation if needed (deep copy)
   var infectiousperiod = $("#infectiousperiod").val();
   var initialinfectives = parseNatList( $("#initialinfectives").val() );
   var initialvaccinated = parseNatList( $("#vaccinated").val() );
   output( "", true );
   gOutbreakResult = simulate( gPopulationData, infectiousperiod, initialinfectives, initialvaccinated );
+  if( gAnimate ) {
+    doAnimate();
+  }
   gUIState = 2;
   updateUIState();
 }
@@ -574,43 +584,41 @@ function exportInfectionTimesButton()
   output( CSV.serialize( _.map(gPopulationData, x=>([ x.id, x.infectedTime, x.initialInfectionTime ])) ), true );
 }
 
-function fitSIRButton()
+// Convert an 'animation speed' value (between 0 and 100) to a delay speed in milliseconds
+// speed of 0 means 5 seconds total duration.
+// speed of 100 means 2 minutes total duration.
+// linear interpolation in between.
+function speedToDelay( speed )
 {
-  /* Fit SIR model to outbreak data */
+  var numSteps = gEventLog.length;
+  if( numSteps > 20 ) numSteps += 10; // in this case, the first and last 10 steps are half as fast
   
-  var maxT = gOutbreakData.length - 1;
-  
-  // Calculate derivatives ds/dt, di/dt, dr/dt
-  var derivs = function( x, beta, gamma ) {
-    var dsdt = -beta*x[0]*x[1];
-    var didt = beta*x[0]*x[1] - gamma*x[1];
-    var drdt = gamma*x[1];
-    return( [dsdt, didt, drdt] );
-  }
-  
-  var costfunc = function( beta, gamma ) {
+  var totalDuration = (5 + (speed/100)*(2*60-5))*1000;
+  return( totalDuration/numSteps );
+}
 
-  }
-  
-  // Possible libraries to use:
-  // ODE solvers:
-  //  * https://github.com/littleredcomputer/odex-js   
-  //  * https://llarsen71.github.io/GMA1D/Docs/files/ODE-js.html
-  // Optimisers:
-  //  * https://github.com/tab58/ndarray-optimization
-  //  * https://github.com/benfred/fmin
-  // Graphing:
-  //  * https://mathjs.org/examples/browser/rocket_trajectory_optimization.html.html
-  
-  
-  
+function updateSpeedSlider()
+{
+  gAnimationSpeed = document.getElementById("animationspeed").value;
+  var totalDuration = 5 + (gAnimationSpeed/100)*(2*60-5);
+  var secs = totalDuration % 60;
+  var secsRounded = Math.floor(totalDuration % 60);
+  var mins = (totalDuration - secs)/60;
+  $('#animspeedcaption').text( (mins > 0 ? mins + " minute": "" ) +(mins > 1 ? "s ":" ") + (secsRounded > 0 ? secsRounded + " second" : "") + (secsRounded > 1 ? "s":"") );
+  console.log("Animation delay is " + speedToDelay( gAnimationSpeed ) + " ms" );
   
 }
 
+function updateAnimationCheckbox()
+{
+  gAnimate = $('#animatecheckbox').prop("checked");
+  if( gAnimate ) $('#animspeedbox').show();
+  else $('#animspeedbox').hide();
+}
 
 function renderAvatars()
 {
-  console.log( "renderAvatars", gPopulationData );
+  if( gDebugLevel > 2 ) { console.log( "renderAvatars", gPopulationData ); }
   // Cache some key DOM elements
   const sCircle = $("#circle_s");
   const iCircle = $("#circle_i");
@@ -636,11 +644,12 @@ function renderAvatars()
     $(p.avatars.infectious).css({left: leftp + "px", top: topp + "px", visibility: "hidden"});
     $(p.avatars.removed).css({left: leftp + "px", top: topp + "px", visibility: "hidden"});
   } );
+  gRenderAvatars = true;
 }
 
 function animateAvatar( avatar, start, end )
 {
-  console.log( "animateAvatar ", avatar, start, end );
+  if( gDebugLevel > 0 ) { console.log( "animateAvatar ", avatar, start, end ); }
   // Move avatar element from location of start element to location of end element.
   const stage = $("#stage");
   start = $(start);
@@ -690,6 +699,7 @@ function updateAvatarNote()
   if( gAvatarsLoaded + gAvatarsFailed == gAvatarsToLoad ) { note.delay(gAvatarsFailed?5000:1000).fadeOut(1000); }
 }
 
+
 var i = 0;
 function go()
 {
@@ -704,7 +714,11 @@ function go2()
   animateAvatar(pp.avatars.moving, pp.avatars.infectious, pp.avatars.removed);
   j++;
 }
-function go3()
+function doAnimate()
 {
+  if( !gAvatarsRendered ) renderAvatars();
+  gAnimStartTime = Date.now();
+  console.log( "Animation started at: ", gAnimStartTime );
   animateEvents( gEventLog );
 }
+

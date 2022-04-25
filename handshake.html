@@ -141,7 +141,16 @@
         Initial infectives:<input type="text" id="initialinfectives" value="0" class="state1">(list of IDs eg <i>0,1,3</i>)</i><br>
         Vaccinated people:<input type="text" id="vaccinated" value="" class="state1">(list of IDs eg <i>0,1,3</i>)<br>
         <input type="button" onclick="runButton()" value="Run outbreak" class="state1">
-        <input type="button" onclick="renderAvatars()" value="Render avatars" class="state1">
+         <br>
+         <input type="checkbox" id="animatecheckbox" name="animatecheckbox" checked onchange="updateAnimationCheckbox();"><label for="animatecheckbox">Animate</label>
+         <div id="animspeedbox">
+         <input type="range" id="animationspeed" name="animationspeed" min="0" max="100" value="50" step="1" oninput="updateSpeedSlider();">
+         <br>
+         Animation will take <span id="animspeedcaption"></span>
+         </div>
+         <input type="checkbox" id="loadavatars" name="loadavatars" checked onchange="gLoadAvatars=document.getElementById('loadavatars').checked"><label for="loadavatars">Load avatars</label>
+
+
       </div>
       <div class="state2  uistateblock">
         <h2>Fit model</h2>
@@ -173,9 +182,5 @@
       </div>
     </div>
    <div id="avatars" style="width: 100px;"></div>
-   <input type="button" onclick="go()" value="Do something">
-   <input type="button" onclick="go2()" value="Do something else">
-   <input type="button" onclick="go3()" value="Do lots">
-   <input type="checkbox" id="loadavatars" name="loadavatars" checked onchange="gLoadAvatars=document.getElementById('loadavatars').checked"><label for="loadavatars">Load avatars</label>
  </body>
 </html>
