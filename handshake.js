@@ -571,6 +571,7 @@ function runButton()
   if( gAnimate ) {
     doAnimate();
   }
+  updateGraph();
   gUIState = 2;
   updateUIState();
 }
@@ -702,21 +703,23 @@ function updateAvatarNote()
   if( gAvatarsLoaded + gAvatarsFailed == gAvatarsToLoad ) { note.delay(gAvatarsFailed?5000:1000).fadeOut(1000); }
 }
 
+function randomiseNames()
+{
+  // shuffle names
+  shuffle(gNameList);
+  // load names into the Names textarea
+  $("#names").val(gNameList.join("\n"));
+}
 
-var i = 0;
-function go()
-{
-  var pp = gPopulationData[i];
-  animateAvatar(pp.avatars.moving, pp.avatars.susceptible, pp.avatars.infectious);
-  i++;
+// Shuffle function from https://javascript.info/task/shuffle
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+    // swap elements array[i] and array[j]
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
-var j = 0;
-function go2()
-{
-  var pp = gPopulationData[j];
-  animateAvatar(pp.avatars.moving, pp.avatars.infectious, pp.avatars.removed);
-  j++;
-}
+
 function doAnimate()
 {
   if( !gAvatarsRendered ) renderAvatars();
@@ -725,3 +728,41 @@ function doAnimate()
   animateEvents( gEventLog );
 }
 
+function updateGraph()
+{
+  // Set up Chartist.js graph
+  var data = {
+    labels: gOutbreakResult.map((e,index)=>index), // [0,1,2...N]
+    series: [
+      {
+        name: "S",
+        data: gOutbreakResult.map(a=>a.S)
+      },
+      {
+        name: "I",
+        data: gOutbreakResult.map(a=>a.I)
+      },
+      {
+        name: "R",
+        data: gOutbreakResult.map(a=>a.R)
+      }
+    ]
+  };
+  var options = {
+    lineSmooth: Chartist.Interpolation.none(),
+    axisY: {
+      onlyInteger: true,
+      low: 0,
+      high: gOutbreakResult[0].S + gOutbreakResult[0].I + gOutbreakResult[0].R
+    },
+    axisX: {
+      low: 0,
+      high: gOutbreakResult.length + 1,
+      onlyInteger: true,
+    },
+  };
+  // TODO: add proper axes with arrows and axis labels.
+  // Reference code here: https://github.com/alexstanbury/chartist-plugin-axistitle/blob/master/src/scripts/chartist-plugin-axistitle.js
+  console.log( data );
+  new Chartist.Line('#graph', data, options);
+}

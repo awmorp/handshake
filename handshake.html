@@ -9,7 +9,11 @@
   <script src="libs/js-arbit.js"></script>
   <script src="libs/csv.min.js"></script>
   <!--<script src="https://unpkg.com/optimization-js@latest/dist/optimization.js"></script>!-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+  <script src="https://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+  
   <script src="default-avatars.js"></script>
+  <script src="names.js"></script>
   <script src="handshake.js"></script>
   <style>
     body {
@@ -114,10 +118,35 @@
     .avatar_load_notification_bad {
       background: orange !important;
     }
+    
+    #graph {
+      width: 100%;
+      border: 1px solid purple;
+    }
+    
+    .ct-series-a .ct-line, .ct-series-a .ct-point {
+      stroke: green;
+    }
+    
+    .ct-series-b .ct-line, .ct-series-b .ct-point {
+      stroke: red;
+    }
+    
+    .ct-series-c .ct-line, .ct-series-c .ct-point {
+      stroke: grey;
+    }
+
+    .ct-line {
+      opacity: 30%;  /* opacity of lines on graph */
+    }
+    
+    .ct-point {
+      stroke-width: 15px; /* size of points on graph */
+    }
 
   </style>
  </head>
- <body onload="updateUIState();">
+ <body onload="randomiseNames();updateUIState();">
   <div id="avatar_load_notification">Loading avatars</div>
   <h1>The handshake game</h1>
   <div id="flexcontainer">
@@ -165,6 +194,7 @@
       <pre id="output1" class="output"></pre>
       <pre id="output2" class="output"></pre>
     </div>
+  </div>
     <div id="stage">
       <div class="circle-box">
         <div class="circle" id="circle_s" style="background: #b1e1b1; border: 2px solid darkgreen;"></div>
@@ -182,6 +212,8 @@
         <div class="circle-label">Removed</div>
       </div>
     </div>
-   <div id="avatars" style="width: 100px;"></div>
+    <div id="graph" class="ct-perfect-fourth">
+    
+    </div>
  </body>
 </html>
