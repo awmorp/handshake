@@ -760,16 +760,19 @@ function updateGraph()
     axisY: {
       onlyInteger: true,
       low: 0,
-      high: gOutbreakResult[0].S + gOutbreakResult[0].I + gOutbreakResult[0].R
+      high: (gOutbreakResult[0].S + gOutbreakResult[0].I + gOutbreakResult[0].R)
     },
     axisX: {
       low: 0,
       high: gOutbreakResult.length + 1,
       onlyInteger: true,
     },
+    plugins: [
+      Chartist.plugins.ctHandshakeAxes()
+    ]
   };
   // TODO: add proper axes with arrows and axis labels.
   // Reference code here: https://github.com/alexstanbury/chartist-plugin-axistitle/blob/master/src/scripts/chartist-plugin-axistitle.js
-  console.log( data );
+//  console.log( data );
   new Chartist.Line('#graph', data, options);
 }
