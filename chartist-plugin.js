@@ -42,71 +42,37 @@ Chartist.plugins.ctHandshakeAxes = function(options)
       yAxis.addClass("ct-my-axis");
       data.svg.append(yAxis, true);
       
-      var yAxisLabel1 = new Chartist.Svg( "text" );
-      yAxisLabel1.text("S");
-      yAxisLabel1.attr({
+      var yAxisLabel = new Chartist.Svg( "text" );
+      yAxisLabel.attr({
         x: data.axisY.chartRect.x1,
         y: data.axisY.chartRect.y2,
         dx: 10,
         dy: 0,
+        stroke: "black",
+        fill: "black"
+      });
+      yAxisLabel.addClass("ct-my-axis");
+      var sLabel = new Chartist.Svg( "tspan", null, null, yAxisLabel, false );
+      sLabel.text("S");
+      sLabel.attr({
         stroke: "green",
         fill: "green"
       });
-      yAxisLabel1.addClass("ct-my-axis");
-      data.svg.append(yAxisLabel1);
-
-      var yAxisLabel2 = new Chartist.Svg( "text" );
-      yAxisLabel2.text(",");
-      yAxisLabel2.attr({
-        x: data.axisY.chartRect.x1,
-        y: data.axisY.chartRect.y2,
-        dx: 23,
-        dy: 0,
-        stroke: "black",
-        fill: "black"
-      });
-      yAxisLabel2.addClass("ct-my-axis");
-      data.svg.append(yAxisLabel2);
-
-      var yAxisLabel3 = new Chartist.Svg( "text" );
-      yAxisLabel3.text("I");
-      yAxisLabel3.attr({
-        x: data.axisY.chartRect.x1,
-        y: data.axisY.chartRect.y2,
-        dx: 30,
-        dy: 0,
+      yAxisLabel.text(",");
+      var iLabel = new Chartist.Svg( "tspan", null, null, yAxisLabel, false );
+      iLabel.text("I");
+      iLabel.attr({
         stroke: "red",
         fill: "red"
       });
-      yAxisLabel3.addClass("ct-my-axis");
-      data.svg.append(yAxisLabel3);
-
-      var yAxisLabel4 = new Chartist.Svg( "text" );
-      yAxisLabel4.text(",");
-      yAxisLabel4.attr({
-        x: data.axisY.chartRect.x1,
-        y: data.axisY.chartRect.y2,
-        dx: 37,
-        dy: 0,
-        stroke: "black",
-        fill: "black"
-      });
-      yAxisLabel4.addClass("ct-my-axis");
-      data.svg.append(yAxisLabel4);
-      
-      var yAxisLabel5 = new Chartist.Svg( "text" );
-      yAxisLabel5.text("R");
-      yAxisLabel5.attr({
-        x: data.axisY.chartRect.x1,
-        y: data.axisY.chartRect.y2,
-        dx: 44,
-        dy: 0,
+      yAxisLabel.text(",");
+      var rLabel = new Chartist.Svg( "tspan", null, null, yAxisLabel, false );
+      rLabel.text("R");
+      rLabel.attr({
         stroke: "grey",
         fill: "grey"
       });
-      yAxisLabel5.addClass("ct-my-axis");
-      data.svg.append(yAxisLabel5);
-
+      data.svg.append(yAxisLabel);
     });
   }   
 };
