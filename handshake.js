@@ -17,6 +17,7 @@ var gEventLog;
 var gAnimate = true; // whether to show the animation. If false, just do the outbreak calculation, don't animate it.
 var gAnimationSpeed = 50;
 var gAnimationNumSteps;
+var gLastT = 0;
 
 var gAvatarsToLoad = 0;
 var gAvatarsLoaded = 0;
@@ -480,8 +481,14 @@ function animateEvents( eventLog )
     if( e[3] ) {
       e[3]();
     }
+    if( e[0] != gLastT ) {
+      // Finished a timestep. Update the graph.
+      updateGraph();
+    }
+    gLastT = e[0];
     setTimeout( function() {animateEvents( eventLog )}, speedToDelay(gAnimationSpeed) );
   } else {
+    updateGraph();
     showMessage( "Finished.", "yellow" );
     gAnimEndTime = Date.now();
     console.log( "Finished at: ", gAnimEndTime, " duration (seconds): ", (gAnimEndTime - gAnimStartTime)/1000 );
@@ -736,15 +743,15 @@ function updateGraph()
     series: [
       {
         name: "S",
-        data: gOutbreakResult.map(a=>a.S)
+        data: gOutbreakResult.map(a=>a.S).slice(0,gLastT+1)
       },
       {
         name: "I",
-        data: gOutbreakResult.map(a=>a.I)
+        data: gOutbreakResult.map(a=>a.I).slice(0,gLastT+1)
       },
       {
         name: "R",
-        data: gOutbreakResult.map(a=>a.R)
+        data: gOutbreakResult.map(a=>a.R).slice(0,gLastT+1)
       }
     ]
   };
