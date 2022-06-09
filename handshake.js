@@ -274,24 +274,22 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   var log = []; // record of # of S, I, R at each step
   var eventLog = new Array; //
   
+  // remove any invalid IDs
+  console.log( popData );
+  initialvaccinated = initialvaccinated.filter( x => popData[x] );
+  initialinfectives = initialinfectives.filter( x => (popData[x] && initialvaccinated.indexOf(x) < 0) );// set difference
+  console.log("after cleanup: ", initialvaccinated, initialinfectives );
+  
   // Vaccinate
-  for( var i = 0; i < initialvaccinated.length; i++ ) {
-    if( !popData[initialvaccinated[i]] ) {
-      console.log( "Error: specified vaccinatee " + initialvaccinated[i] + " does not exist." );
-    }
-    /* Vaccinate the person */
-    enactEvent( popData, eventLog, 0, "initialvaccinate", initialvaccinated[i] );
+  if( initialvaccinated.length ) {
+    enactEvent( popData, eventLog, 0, "initialvaccinate", initialvaccinated );
   }
-
   
   // Infect initial infectives
-  for( var i = 0; i < initialinfectives.length; i++ ) {
-    if( !popData[initialinfectives[i]] ) {
-      console.log( "Error: specified initial infective " + initialinfectives[i] + " does not exist." );
-    }
-    /* Infect initial infective */
-    enactEvent( popData, eventLog, 0, "initialinfection", initialinfectives[i] );
+  if( initialinfectives.length ) {
+    enactEvent( popData, eventLog, 0, "initialinfection", initialinfectives );
   }
+  
   S = _.filter( popData, p=>(p && p.compartment == "S") );
   I = _.filter( popData, p=>(p && p.compartment == "I") );
   R = _.filter( popData, p=>(p && p.compartment == "R") );
@@ -340,13 +338,36 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   return( log );
 }
 
-function enactEvent(popData, eventLog, t, event, person1id, person2id)
+function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=false)
 {
   var msg, msg2;
   var func, func2;
-  const person1 = popData[person1id];
-  const person2 = (person2id ? popData[person2id] : null);
+  const person1 = ($.isArray(person1id) ? person1id.map(x => popData[x]) : popData[person1id] );
+  const person2 = ($.isArray(person2id) ? person2id.map(x => popData[x]) : popData[person2id] );
   switch( event ) {
+    case "initialinfection":
+    {
+      if( !$.isArray(person1id) || person1id.length == 0 ) {
+        console.log( "Error: invalid person1id for initialinfection" );
+        return;
+      }
+      msg = person1.map(x => x.name).join(", ") + (person1.length > 1 ? " are": " is") + " initially infective!";
+      msg = replaceLast( msg, ", ", " and " );
+
+      func = function() {
+        person1.forEach( p => animateAvatar(p.avatars.moving, p.avatars.susceptible, p.avatars.infectious) );
+        showMessage(msg,"yellow");
+      }
+      person1.forEach( p => {
+        p.compartment = "I";
+        p.infectedTime = 0;
+        p.initialInfectionTime = t;
+      });
+      eventLog.push([t,"initialinfection",msg,func,person1id, null, true]);
+      output( "t=" + t + ": " + msg );
+      break;
+    }
+
     case "initialinfection":
     {
       if( !person1 ) {
@@ -357,7 +378,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
       func = function() {
         showMessage(msg,"yellow");
       }
-      eventLog.push([t,"initialinfection",msg,func,person1id]);
+      eventLog.push([t,"initialinfection",msg,func,person1id, null, true]);
       output( "t=" + t + ": " + msg );
       enactEvent( popData, eventLog, t, "infection", person1id ); // Infect the patient
       break;
@@ -376,23 +397,26 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         showMessage( msg, "red" );
         animateAvatar(person1.avatars.moving, person1.avatars.susceptible, person1.avatars.infectious);
       };
-      eventLog.push([t,"infection",msg, func, person1id]);
+      eventLog.push([t,"infection",msg, func, person1id, null, fast]);
       output( "t=" + t + ": " + msg );
       break;
     }
     case "initialvaccinate":
     {
-      if( !person1 ) {
-        console.log( "Error: specified vaccinatee " + person1id + " does not exist" );
+      if( !$.isArray(person1id) || person1id.length == 0 ) {
+        console.log( "Error: invalid person1id for initialvaccinate" );
         return;
       }
-      msg = person1.name + " is initially vaccinated.";
+      msg = person1.map(x => x.name).join(", ") + (person1.length > 1 ? " are": " is") + " initially vaccinated.";
+      msg = replaceLast( msg, ", ", " and " );
+
       func = function() {
+        person1.forEach( p => animateAvatar(p.avatars.moving, p.avatars.susceptible, p.avatars.removed) );
         showMessage(msg,"green");
       }
-      eventLog.push([t,"initialvaccinate",msg,func,person1id]);
+      person1.forEach( p => (p.compartment = "R") );
+      eventLog.push([t,"initialvaccinate",msg,func,person1id, null, true]);
       output( "t=" + t + ": " + msg );
-      enactEvent( popData, eventLog, t, "recovery", person1id ); // Infect the patient
       break;
     }
     case "recovery":
@@ -410,7 +434,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         }
       }
       person1.compartment = "R";
-      eventLog.push([t,"recovery",msg,func,person1id]);
+      eventLog.push([t,"recovery",msg,func,person1id, null, fast]);
       output( "t=" + t + ": " + msg );
       break;
     }
@@ -425,7 +449,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
       func = function() {
         showMessage( msg, "yellow" );
       }
-      eventLog.push([t,"handshake",msg,func,person1id, person2id]);
+      eventLog.push([t,"handshake",msg,func,person1id, person2id, fast]);
       output( "t=" + t + ": " + msg );
       /* Decide if person2 becomes infected */
       if( person1.compartment == "I" )
@@ -444,7 +468,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
           func2 = function() {
             showMessage( msg2, "yellow" );
           }
-          eventLog.push([t,"noinfection",msg,func2,person1id, person2id, (person2.compartment == "I"?"infected":"removed")]);
+          eventLog.push([t,"noinfection",msg,func2,person1id, person2id, fast]);
           output( "t=" + t + ": " + msg );
         }
       }
@@ -454,7 +478,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id)
         func2 = function() {
             showMessage( msg2, "yellow" );
           }
-        eventLog.push([t,"noinfection",msg,func2,person1id, person2id, "notinfectious"]);
+        eventLog.push([t,"noinfection",msg,func2,person1id, person2id, fast]);
         output( "t=" + t + ": " + msg );
       }
       break;
@@ -486,7 +510,11 @@ function animateEvents( eventLog )
       updateGraph();
     }
     gLastT = e[0];
-    setTimeout( function() {animateEvents( eventLog )}, speedToDelay(gAnimationSpeed) );
+    if( e[6] ) {
+      setTimeout( function() {animateEvents( eventLog )}, speedToDelay(gAnimationSpeed) );
+    } else {
+      animateEvents( eventLog );
+    }
   } else {
     updateGraph();
     showMessage( "Finished.", "yellow" );
@@ -776,3 +804,10 @@ function updateGraph()
 //  console.log( data );
   new Chartist.Line('#graph', data, options);
 }
+
+function replaceLast(str, what, replacement) {
+        var pcs = str.split(what);
+        if( pcs.length <= 1 ) return( str );
+        var lastPc = pcs.pop();
+        return pcs.join(what) + replacement + lastPc;
+};
