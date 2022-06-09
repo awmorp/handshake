@@ -122,7 +122,7 @@ function makeShakes(popsize, numshakes, names, errorrate, seed)
   
   /* Initialise the shakes object */
   for( var i = 0; i < popsize; i++ ) {
-    shakes[i] = new Person(i, names[i % names.length] + (Math.floor(i / names.length) > 0 ? "_"+Math.floor(i / names.length):""), null, random());
+    shakes[i] = new Person(i, names[i % names.length] + (Math.floor(i / names.length) > 0 ? " "+romanize(Math.floor(i / names.length)+1):""), null, random());
   }
   if( numshakes == 0 || popsize == 0 ) return( {"shakes": shakes,"fails":fails} ); // Trivial cases, nothing to do
   
@@ -275,10 +275,8 @@ function simulate(popData, infectiousPeriod, initialinfectives, initialvaccinate
   var eventLog = new Array; //
   
   // remove any invalid IDs
-  console.log( popData );
   initialvaccinated = initialvaccinated.filter( x => popData[x] );
   initialinfectives = initialinfectives.filter( x => (popData[x] && initialvaccinated.indexOf(x) < 0) );// set difference
-  console.log("after cleanup: ", initialvaccinated, initialinfectives );
   
   // Vaccinate
   if( initialvaccinated.length ) {
@@ -367,22 +365,6 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=fals
       output( "t=" + t + ": " + msg );
       break;
     }
-
-    case "initialinfection":
-    {
-      if( !person1 ) {
-        console.log( "Error: specified initial infective " + person1id + " does not exist" );
-        return;
-      }
-      msg = person1.name + " is initially infective!";
-      func = function() {
-        showMessage(msg,"yellow");
-      }
-      eventLog.push([t,"initialinfection",msg,func,person1id, null, true]);
-      output( "t=" + t + ": " + msg );
-      enactEvent( popData, eventLog, t, "infection", person1id ); // Infect the patient
-      break;
-    }
     case "infection":
     {
       if( !person1 ) {
@@ -449,7 +431,7 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=fals
       func = function() {
         showMessage( msg, "yellow" );
       }
-      eventLog.push([t,"handshake",msg,func,person1id, person2id, fast]);
+      eventLog.push([t,"handshake",msg,func,person1id, person2id, true]);
       output( "t=" + t + ": " + msg );
       /* Decide if person2 becomes infected */
       if( person1.compartment == "I" )
@@ -468,8 +450,8 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=fals
           func2 = function() {
             showMessage( msg2, "yellow" );
           }
-          eventLog.push([t,"noinfection",msg,func2,person1id, person2id, fast]);
-          output( "t=" + t + ": " + msg );
+          eventLog.push([t,"noinfection",msg2,func2,person1id, person2id, fast]);
+          output( "t=" + t + ": " + msg2 );
         }
       }
       else
@@ -478,8 +460,8 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=fals
         func2 = function() {
             showMessage( msg2, "yellow" );
           }
-        eventLog.push([t,"noinfection",msg,func2,person1id, person2id, fast]);
-        output( "t=" + t + ": " + msg );
+        eventLog.push([t,"noinfection",msg2,func2,person1id, person2id, fast]);
+        output( "t=" + t + ": " + msg2 );
       }
       break;
     }
@@ -488,8 +470,6 @@ function enactEvent(popData, eventLog, t, event, person1id, person2id, fast=fals
       console.log( "ERROR: enactEvent got unknown event '" + event + "'" );
     }
   }
-  popData[person1id] = person1;
-  popData[person2id] = person2;
 }
 
 function showMessage( msg, colour )
@@ -805,9 +785,26 @@ function updateGraph()
   new Chartist.Line('#graph', data, options);
 }
 
+// replace last occurence of a substring in a string. Adapted from https://stackoverflow.com/questions/2729666/javascript-replace-last-occurrence-of-text-in-a-string
 function replaceLast(str, what, replacement) {
         var pcs = str.split(what);
         if( pcs.length <= 1 ) return( str );
         var lastPc = pcs.pop();
         return pcs.join(what) + replacement + lastPc;
 };
+
+
+// Convert to roman numeral - from https://stackoverflow.com/questions/9083037/convert-a-number-into-a-roman-numeral-in-javascript
+function romanize (num) {
+    if (isNaN(num))
+        return NaN;
+    var digits = String(+num).split(""),
+        key = ["","C","CC","CCC","CD","D","DC","DCC","DCCC","CM",
+               "","X","XX","XXX","XL","L","LX","LXX","LXXX","XC",
+               "","I","II","III","IV","V","VI","VII","VIII","IX"],
+        roman = "",
+        i = 3;
+    while (i--)
+        roman = (key[+digits.pop() + (i * 10)] || "") + roman;
+    return Array(+digits.join("") + 1).join("M") + roman;
+}
